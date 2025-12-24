@@ -30,6 +30,9 @@ const DashboardContent: React.FC = () => {
     if (typeof window !== 'undefined') {
       const isDark = localStorage.getItem('darkMode') === 'true';
       setDarkMode(isDark);
+      if(window.innerWidth < 1024) {
+        setSidebarCollapsed(true);
+      }
     }
   }, []);
 
@@ -90,7 +93,7 @@ const DashboardContent: React.FC = () => {
         onDarkModeToggle={() => setDarkMode(!darkMode)}
       />
 
-      <AccessibilityBanner />
+      <AccessibilityBanner sidebarCollapsed={sidebarCollapsed} />
       
       <div className="lg:hidden">
         <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>

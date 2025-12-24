@@ -2,10 +2,17 @@
 import React from 'react';
 import { Heart, ArrowRight, Accessibility } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-const AccessibilityBanner: React.FC = () => {
+interface AccessibilityBannerProps {
+  sidebarCollapsed: boolean;
+}
+
+const AccessibilityBanner: React.FC<AccessibilityBannerProps> = ({ sidebarCollapsed }) => {
   return (
-    <div className="bg-gradient-to-r from-primary via-primary/80 to-primary text-primary-foreground fixed top-16 w-full z-40">
+    <div className={cn("bg-gradient-to-r from-primary via-primary/80 to-primary text-primary-foreground fixed top-16 z-40 transition-all duration-300", 
+      sidebarCollapsed ? 'lg:left-16 right-0' : 'lg:left-64 right-0'
+    )}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
