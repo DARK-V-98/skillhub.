@@ -49,19 +49,29 @@ export const AuthForm = () => {
   };
 
   const handleAuthError = (error: any) => {
+    setIsLoading(false);
+    let title = isSignUp ? 'Sign Up Error' : 'Sign In Error';
+    let description = 'An unknown error occurred. Please try again.';
+
     if (error instanceof FirebaseError) {
-      toast({
-        variant: 'destructive',
-        title: isSignUp ? 'Sign Up Error' : 'Sign In Error',
-        description: error.message.replace('Firebase: ', ''),
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'An unknown error occurred',
-        description: 'Please try again.',
-      });
+      description = error.message.replace('Firebase: ', '');
+      if (error.code === 'auth/invalid-credential') {
+        description = 'Invalid email or password. Please try again.';
+      }
+    } else if (error.code) { // Handle cases where error might be a plain object with a code
+        if (error.code === 'auth/invalid-credential') {
+            description = 'Invalid email or password. Please try again.';
+        } else {
+            description = error.message || description;
+        }
     }
+
+
+    toast({
+      variant: 'destructive',
+      title: title,
+      description: description,
+    });
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -83,8 +93,6 @@ export const AuthForm = () => {
       }
     } catch (error) {
       handleAuthError(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
