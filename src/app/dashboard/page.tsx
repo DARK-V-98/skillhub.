@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useRole } from '@/contexts/RoleContext';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import AccessibilityPanel from '@/components/AccessibilityPanel';
 import AccessibilityBanner from '@/components/AccessibilityBanner';
 import StudentDashboard from '@/components/dashboards/StudentDashboard';
 import TeacherDashboard from '@/components/dashboards/TeacherDashboard';
@@ -108,8 +107,6 @@ const DashboardContent: React.FC = () => {
           {renderDashboard()}
         </div>
       </main>
-      
-      <AccessibilityPanel />
     </div>
   );
 };

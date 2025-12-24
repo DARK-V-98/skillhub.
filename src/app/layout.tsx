@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import AccessibilityPanel from '@/components/AccessibilityPanel';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const openSans = Open_Sans({ 
@@ -31,6 +32,7 @@ export default function RootLayout({
             <RoleProvider>
               {children}
               <Toaster />
+              <AccessibilityPanel />
             </RoleProvider>
           </AccessibilityProvider>
         </FirebaseClientProvider>
