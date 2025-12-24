@@ -24,8 +24,6 @@ const DashboardPage: React.FC = () => {
 
     React.useEffect(() => {
         if(userProfile?.role) {
-            // Set the initial role based on the user's profile.
-            // A developer can then change it via the UI.
             setCurrentRole(userProfile.role);
         }
     },[userProfile, setCurrentRole]);
@@ -42,7 +40,6 @@ const DashboardPage: React.FC = () => {
           return <SponsorDashboard />;
         case 'admin':
           return <AdminDashboard />;
-        // The developer's default view is the student dashboard.
         case 'developer':
         default:
           return <StudentDashboard />;

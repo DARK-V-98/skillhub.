@@ -30,7 +30,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useRole } from '@/contexts/RoleContext';
-import { UserRole, Notification } from '@/lib/types';
+import { UserRole, Notification, UserProfile } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
 import { signOut } from '@/firebase/auth';
@@ -38,7 +38,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
+import { useFirestore, useFirebase } from '@/firebase/provider';
+import { useDoc } from '@/firebase/firestore/use-doc';
+import { doc } from 'firebase/firestore';
+
 
 interface NavbarProps {
   isMobileSidebarOpen: boolean;
@@ -64,10 +67,16 @@ const roleColors: Record<UserRole, string> = {
 };
 
 const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkModeToggle }) => {
-  const { currentRole, setCurrentRole } = useRole();
+  const { setCurrentRole } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useUser();
   const firestore = useFirestore();
+
+  const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  const currentRole = userProfile?.role ?? 'student';
+
 
   const notificationsQuery = user ? query(collection(firestore, `users/${user.uid}/notifications`)) : null;
   const { data: notifications } = useCollection<Notification>(notificationsQuery);
@@ -94,7 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
           </Link>
         </div>
 
-        {user && (
+        {user && userProfile && (
             <>
                 {/* Center section - Search */}
                 <div className="hidden md:flex flex-1 max-w-xl mx-8">
@@ -114,35 +123,37 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                 {/* Right section */}
                 <div className="flex items-center gap-2">
                 {/* Role Switcher (Demo) */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 btn-touch-target">
-                        <Badge className={cn('font-normal', roleColors[currentRole])}>
-                        {roleLabels[currentRole]}
-                        </Badge>
-                        <ChevronDown className="h-4 w-4" />
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-popover">
-                    <DropdownMenuLabel>Switch Role (Demo)</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {(Object.keys(roleLabels) as UserRole[]).map((role) => (
-                        <DropdownMenuItem
-                        key={role}
-                        onClick={() => setCurrentRole(role)}
-                        className={cn(
-                            'cursor-pointer btn-touch-target',
-                            currentRole === role && 'bg-accent'
-                        )}
-                        >
-                        <Badge className={cn('mr-2', roleColors[role])}>
+                {userProfile.role === 'developer' && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 btn-touch-target">
+                            <Badge className={cn('font-normal', roleColors[currentRole])}>
+                            {roleLabels[currentRole]}
+                            </Badge>
+                            <ChevronDown className="h-4 w-4" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-popover">
+                        <DropdownMenuLabel>Switch Role (Developer)</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {(Object.keys(roleLabels) as UserRole[]).map((role) => (
+                            <DropdownMenuItem
+                            key={role}
+                            onClick={() => setCurrentRole(role)}
+                            className={cn(
+                                'cursor-pointer btn-touch-target',
+                                currentRole === role && 'bg-accent'
+                            )}
+                            >
+                            <Badge className={cn('mr-2', roleColors[role])}>
+                                {roleLabels[role]}
+                            </Badge>
                             {roleLabels[role]}
-                        </Badge>
-                        {roleLabels[role]}
-                        </DropdownMenuItem>
-                    ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            </DropdownMenuItem>
+                        ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
 
                 {/* Dark mode toggle */}
                 <Button
@@ -245,13 +256,17 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                         </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer btn-touch-target">
+                    <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
+                      <Link href="/dashboard/profile">
                         <User className="h-4 w-4 mr-2" />
                         Profile
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer btn-touch-target">
+                    <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
+                      <Link href="/dashboard/settings">
                         <Settings className="h-4 w-4 mr-2" />
                         Settings
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer btn-touch-target text-destructive" onClick={() => signOut()}>
