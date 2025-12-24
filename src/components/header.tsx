@@ -1,66 +1,39 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Mountain } from 'lucide-react';
+import { Menu, BookOpen } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Mountain className="h-6 w-6" />
-            <span className="hidden font-bold sm:inline-block">
-              Simple Site
-            </span>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
+        <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <Logo size="lg" showText={false} />
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            <Link
-              href="#features"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
+          <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
+            <Link href="/#features" className="transition-colors hover:text-primary">
               Features
             </Link>
-            <Link
-              href="#contact"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
+             <Link href="/teachers" className="transition-colors hover:text-primary">
+              Instructors
+            </Link>
+            <Link href="/#sponsorship" className="transition-colors hover:text-primary">
+              Sponsorship
+            </Link>
+            <Link href="/#contact" className="transition-colors hover:text-primary">
               Contact
             </Link>
           </nav>
-        </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="inline-flex items-center justify-center md:hidden"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle Menu</span>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link href="/login">Sign In</Link>
             </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
-                <Mountain className="h-6 w-6" />
-                <span className="font-bold">
-                Simple Site
-                </span>
-            </Link>
-            <div className="grid gap-2 py-6">
-              <Link href="#features" className="flex w-full items-center py-2 text-lg font-semibold">Features</Link>
-              <Link href="#contact" className="flex w-full items-center py-2 text-lg font-semibold">Contact</Link>
-            </div>
-          </SheetContent>
-        </Sheet>
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <Button asChild>
-            <Link href="#contact">
-              Get In Touch
-            </Link>
-          </Button>
+            <Button asChild>
+              <Link href="/login">Sign Up</Link>
+            </Button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
   );
 }

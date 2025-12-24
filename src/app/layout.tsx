@@ -6,6 +6,8 @@ import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import AccessibilityPanel from '@/components/AccessibilityPanel';
+import Header from '@/components/header';
+import Footer from '@/components/footer';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const openSans = Open_Sans({ 

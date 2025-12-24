@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Users, BarChart, Heart, Video, PenTool, TrendingUp, BookOpen, Shield, GraduationCap, Code } from 'lucide-react';
@@ -9,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import StudentForm from '@/components/StudentForm';
 import TeacherForm from '@/components/TeacherForm';
 import SponsorForm from '@/components/SponsorForm';
+import Header from '@/components/header';
+import Footer from '@/components/footer';
 
 const features = [
   {
@@ -77,35 +78,7 @@ const accessibilityFeatures = {
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
-        <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <Logo size="lg" showText={false} />
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-            <Link href="#courses" className="transition-colors hover:text-primary">
-              Courses
-            </Link>
-            <Link href="#live" className="transition-colors hover:text-primary">
-              Live
-            </Link>
-            <Link href="#sponsorship" className="transition-colors hover:text-primary">
-              Sponsorship
-            </Link>
-            <Link href="#contact" className="transition-colors hover:text-primary">
-              Contact
-            </Link>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/login">Sign Up</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1">
         {/* Hero Section */}
@@ -322,47 +295,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="bg-secondary/50 border-t">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            <div className="md:col-span-2">
-              <Logo size="lg" showText={false} />
-              <p className="mt-4 text-muted-foreground max-w-xs">
-                Empowering learners and educators worldwide with accessible, quality education.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="#courses" className="hover:text-primary">Courses</Link></li>
-                <li><Link href="#live" className="hover:text-primary">Live Sessions</Link></li>
-                <li><Link href="#community" className="hover:text-primary">Community</Link></li>
-                <li><Link href="#sponsorship" className="hover:text-primary">Sponsorship</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="#about" className="hover:text-primary">About Us</Link></li>
-                <li><Link href="#careers" className="hover:text-primary">Careers</Link></li>
-                <li><Link href="#contact" className="hover:text-primary">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Resources</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="#blog" className="hover:text-primary">Blog</Link></li>
-                <li><Link href="#help" className="hover:text-primary">Help Center</Link></li>
-                <li><Link href="#terms" className="hover:text-primary">Terms of Service</Link></li>
-                <li><Link href="#privacy" className="hover:text-primary">Privacy Policy</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} SkillHub. All rights reserved. Developed by esystemlk.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
