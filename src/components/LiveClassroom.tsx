@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Input } from './ui/input';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
 
@@ -35,6 +35,7 @@ interface LiveClassroomProps {
 interface ChatMessage {
     id: string;
     text: string;
+    authorId: string;
     authorName: string;
     authorAvatar: string;
     createdAt: any;
@@ -126,17 +127,14 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
             newParticipantsList.push(doc.data() as UserProfile);
         });
 
-        setParticipants(currentParticipants => {
-            const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, currentParticipants);
-            
-            // Perform side-effects after state update
-            setTimeout(() => {
-                joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
-                left.forEach(p => toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" }));
-            }, 0);
-            
-            return newParticipantsList;
-        });
+        const oldParticipants = participants;
+        setParticipants(newParticipantsList);
+
+        const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, oldParticipants);
+        
+        joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
+        left.forEach(p => toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" }));
+
     });
 
     // Cleanup function
@@ -233,6 +231,7 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
     await addDoc(collection(firestore, 'liveClasses', liveClass.id, 'messages'), {
         text: newMessage,
+        authorId: user.uid,
         authorName: user.displayName || 'Anonymous',
         authorAvatar: user.photoURL || '',
         createdAt: serverTimestamp(),
@@ -345,34 +344,58 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
       <div className={cn("absolute top-0 right-0 h-full bg-gray-900/80 backdrop-blur-sm transition-transform duration-300 overflow-hidden flex flex-col w-80", isChatOpen || isParticipantsOpen ? 'translate-x-0' : 'translate-x-full')}>
         {isChatOpen && (
-            <>
+            <TooltipProvider>
                 <div className="p-4 border-b border-gray-700">
                     <h3 className="text-white font-semibold">Live Chat</h3>
                 </div>
                 <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-                    {messages.map(msg => (
-                         <div key={msg.id} className="flex items-start gap-2.5">
-                            <Avatar className="w-8 h-8">
-                                <AvatarImage src={msg.authorAvatar}/>
-                                <AvatarFallback>{msg.authorName?.charAt(0) || 'U'}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col gap-1 w-full max-w-[320px]">
-                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                                    <span className="text-sm font-semibold text-white">{msg.authorName}</span>
-                                    <span className="text-xs font-normal text-gray-400">{msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt.seconds * 1000), { addSuffix: true }) : ''}</span>
+                    {messages.map(msg => {
+                        const isYou = msg.authorId === user?.uid;
+                        const messageDate = msg.createdAt ? new Date(msg.createdAt.seconds * 1000) : new Date();
+
+                        return (
+                         <div key={msg.id} className={cn('flex items-end gap-2', isYou && 'justify-end')}>
+                             {!isYou && (
+                                <Avatar className="w-8 h-8 shrink-0">
+                                    <AvatarImage src={msg.authorAvatar}/>
+                                    <AvatarFallback>{msg.authorName?.charAt(0) || 'U'}</AvatarFallback>
+                                </Avatar>
+                             )}
+                            <div className={cn("flex flex-col gap-1 w-full max-w-[280px]", isYou && 'items-end')}>
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-xs font-semibold text-white">{isYou ? 'You' : msg.authorName}</span>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <span className="text-xs font-normal text-gray-400 hover:text-gray-200">
+                                                {formatDistanceToNow(messageDate, { addSuffix: true })}
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">
+                                            {format(messageDate, "PPP, p")}
+                                        </TooltipContent>
+                                    </Tooltip>
                                 </div>
-                                <div className="leading-tight p-3 rounded-xl bg-gray-800 text-white">
-                                   <p className="text-sm font-normal">{msg.text}</p>
+                                <div className={cn(
+                                    "leading-tight p-3 rounded-2xl text-white text-sm",
+                                    isYou ? "bg-primary text-primary-foreground rounded-br-none" : "bg-gray-700 rounded-bl-none"
+                                )}>
+                                   <p className="font-normal">{msg.text}</p>
                                 </div>
                             </div>
+                            {isYou && (
+                                <Avatar className="w-8 h-8 shrink-0">
+                                    <AvatarImage src={msg.authorAvatar}/>
+                                    <AvatarFallback>{msg.authorName?.charAt(0) || 'Y'}</AvatarFallback>
+                                </Avatar>
+                             )}
                         </div>
-                    ))}
+                    )})}
                 </div>
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-700 flex items-center gap-2">
                     <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="bg-gray-800 border-gray-700 text-white"/>
                     <Button type="submit" size="icon" disabled={!newMessage.trim()}><Send className="h-4 w-4"/></Button>
                 </form>
-            </>
+            </TooltipProvider>
         )}
         {isParticipantsOpen && (
             <>
