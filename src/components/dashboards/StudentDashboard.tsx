@@ -14,15 +14,46 @@ import StatCard from '@/components/StatCard';
 import CourseCard from '@/components/CourseCard';
 import LiveClassCard from '@/components/LiveClassCard';
 import AchievementCard from '@/components/AchievementCard';
-import { courses, liveClasses, achievements } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase/auth/use-user';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, query, where } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/provider';
+import type { Course, LiveClass, Achievement } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 const StudentDashboard: React.FC = () => {
   const { user } = useUser();
-  const enrolledCourses = courses.filter(c => c.progress !== undefined);
-  const upcomingClasses = liveClasses.filter(c => !c.isLive).slice(0, 2);
-  const liveNow = liveClasses.filter(c => c.isLive);
+  const firestore = useFirestore();
+
+  const { data: enrolledCourses, loading: enrolledCoursesLoading } = useCollection<Course>(
+    firestore ? query(collection(firestore, 'courses'), where('progress', '!=', undefined)) : null
+  );
+
+  const { data: recommendedCourses, loading: recommendedCoursesLoading } = useCollection<Course>(
+    firestore ? query(collection(firestore, 'courses'), where('progress', '==', undefined)) : null
+  );
+
+  const { data: liveClasses, loading: liveClassesLoading } = useCollection<LiveClass>(
+    firestore ? collection(firestore, 'liveClasses') : null
+  );
+  
+  const { data: achievements, loading: achievementsLoading } = useCollection<Achievement>(
+    firestore ? collection(firestore, 'achievements') : null
+  );
+
+  const upcomingClasses = liveClasses?.filter(c => !c.isLive).slice(0, 2) || [];
+  const liveNow = liveClasses?.filter(c => c.isLive) || [];
+
+  const isLoading = enrolledCoursesLoading || recommendedCoursesLoading || liveClassesLoading || achievementsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -42,12 +73,12 @@ const StudentDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Active Courses"
-          value={enrolledCourses.length}
+          value={enrolledCourses?.length || 0}
           icon={BookOpen}
         />
         <StatCard
           title="Achievements"
-          value={achievements.length}
+          value={achievements?.length || 0}
           icon={Trophy}
         />
         <StatCard
@@ -80,7 +111,7 @@ const StudentDashboard: React.FC = () => {
       )}
 
       {/* My Courses Section */}
-      <section aria_labelledby="my-courses-heading">
+      <section aria-labelledby="my-courses-heading">
         <div className="flex items-center justify-between mb-4">
           <h2 id="my-courses-heading" className="text-xl font-semibold text-foreground">
             My Courses
@@ -90,7 +121,7 @@ const StudentDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {enrolledCourses.slice(0, 3).map((course) => (
+          {(enrolledCourses || []).slice(0, 3).map((course) => (
             <CourseCard
               key={course.id}
               course={course}
@@ -131,7 +162,7 @@ const StudentDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {achievements.slice(0, 2).map((achievement) => (
+          {(achievements || []).slice(0, 2).map((achievement) => (
             <AchievementCard
               key={achievement.id}
               achievement={achievement}
@@ -153,7 +184,7 @@ const StudentDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {courses.filter(c => c.progress === undefined).slice(0, 4).map((course) => (
+          {(recommendedCourses || []).slice(0, 4).map((course) => (
             <CourseCard
               key={course.id}
               course={course}

@@ -93,7 +93,7 @@ const DashboardContent: React.FC = () => {
         onDarkModeToggle={() => setDarkMode(!darkMode)}
       />
 
-      <AccessibilityBanner sidebarCollapsed={sidebarCollapsed} />
+      {user && <AccessibilityBanner sidebarCollapsed={sidebarCollapsed} />}
       
       <div className="lg:hidden">
         <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
@@ -126,7 +126,8 @@ const DashboardContent: React.FC = () => {
       <main
         id="main-content"
         className={cn(
-          'pt-32 min-h-screen transition-all duration-300',
+          'pt-16 min-h-screen transition-all duration-300',
+          user && 'pt-32',
           user && !sidebarCollapsed ? 'lg:pl-64' : (user ? 'lg:pl-16' : '')
         )}
       >
