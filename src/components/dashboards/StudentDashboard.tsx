@@ -39,11 +39,11 @@ const StudentDashboard: React.FC = () => {
   );
   
   const { data: achievements, loading: achievementsLoading } = useCollection<Achievement>(
-    firestore ? collection(firestore, 'achievements') : null
+    firestore ? query(collection(firestore, 'users', user?.uid || 'null'), 'achievements') : null
   );
 
-  const upcomingClasses = liveClasses?.filter(c => !c.isLive).slice(0, 2) || [];
-  const liveNow = liveClasses?.filter(c => c.isLive) || [];
+  const upcomingClasses = liveClasses?.filter(c => new Date(c.startTime) > new Date()).slice(0, 2) || [];
+  const liveNow = liveClasses?.filter(c => new Date(c.startTime) <= new Date() && c.isLive) || [];
 
   const isLoading = enrolledCoursesLoading || recommendedCoursesLoading || liveClassesLoading || achievementsLoading;
 
@@ -75,21 +75,25 @@ const StudentDashboard: React.FC = () => {
           title="Active Courses"
           value={enrolledCourses?.length || 0}
           icon={BookOpen}
+          change={{ value: 2, positive: true }}
         />
         <StatCard
           title="Achievements"
           value={achievements?.length || 0}
           icon={Trophy}
+          change={{ value: 1, positive: true }}
         />
         <StatCard
           title="Learning Hours"
           value="47.5h"
           icon={Clock}
+          change={{ value: 12, positive: true }}
         />
         <StatCard
           title="Avg. Progress"
           value="68%"
           icon={TrendingUp}
+          change={{ value: 8, positive: true }}
         />
       </div>
 
