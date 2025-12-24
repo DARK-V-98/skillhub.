@@ -88,6 +88,7 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       localStream?.getTracks().forEach(track => track.stop());
       pc?.close();
     };
+     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -238,3 +239,5 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 };
 
 export default LiveClassroom;
+
+    
