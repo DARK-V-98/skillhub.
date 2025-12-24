@@ -5,8 +5,7 @@ import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { LiveClass } from '@/lib/types';
-import { Loader2, VideoOff } from 'lucide-react';
-import DashboardLayout from '../../layout';
+import { Loader2 } from 'lucide-react';
 import LiveClassroom from '@/components/LiveClassroom';
 
 const LiveClassPage = () => {
@@ -19,33 +18,27 @@ const LiveClassPage = () => {
 
   if (classLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex justify-center items-center h-96">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (classError || !liveClass) {
     return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-destructive">Live Class Not Found</h2>
-          <p className="text-muted-foreground mt-2">
-            The class you are looking for does not exist or has ended.
-          </p>
-        </div>
-      </DashboardLayout>
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold text-destructive">Live Class Not Found</h2>
+        <p className="text-muted-foreground mt-2">
+          The class you are looking for does not exist or has ended.
+        </p>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto p-0">
+    <div className="container mx-auto p-0 -mt-8">
         <LiveClassroom liveClass={liveClass} />
-      </div>
-    </DashboardLayout>
+    </div>
   );
 };
 

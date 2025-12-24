@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import { useRole } from '@/contexts/RoleContext';
@@ -6,7 +5,6 @@ import StudentDashboard from '@/components/dashboards/StudentDashboard';
 import TeacherDashboard from '@/components/dashboards/TeacherDashboard';
 import SponsorDashboard from '@/components/dashboards/SponsorDashboard';
 import AdminDashboard from '@/components/dashboards/AdminDashboard';
-import DashboardLayout from './layout';
 import { useUser } from '@/firebase/auth/use-user';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore } from '@/firebase/provider';
@@ -50,18 +48,16 @@ const DashboardPage: React.FC = () => {
   
     if(userProfileLoading){
       return(
-        <DashboardLayout>
-            <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        </DashboardLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-20rem)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
       )
     }
 
     return (
-      <DashboardLayout>
+      <>
         {renderDashboard()}
-      </DashboardLayout>
+      </>
     );
   };
   
