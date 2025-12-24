@@ -32,6 +32,7 @@ interface SidebarProps {
   onToggle: () => void;
   activePage: string;
   onNavigate: (page: string) => void;
+  isMobile?: boolean;
 }
 
 interface NavItem {
@@ -87,6 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggle,
   activePage,
   onNavigate,
+  isMobile = false,
 }) => {
   const { currentRole } = useRole();
   const { user } = useUser();
@@ -106,7 +108,31 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = getNavItems();
   
-  if (!user) return null;
+  if (!user && !isMobile) return null;
+
+  if(isMobile) {
+    return (
+        <nav className="flex-1 px-2 space-y-1 py-4">
+            {navItems.map((item) => (
+            <Button
+                key={item.id}
+                variant="ghost"
+                onClick={() => onNavigate(item.id)}
+                className={cn(
+                'w-full justify-start btn-touch-target transition-all duration-200 px-4',
+                activePage === item.id
+                    ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                    : 'text-sidebar-foreground hover:bg-accent hover:text-accent-foreground'
+                )}
+                aria-current={activePage === item.id ? 'page' : undefined}
+            >
+                <item.icon className="h-5 w-5 shrink-0 mr-3" />
+                <span>{item.label}</span>
+            </Button>
+            ))}
+        </nav>
+    )
+  }
 
   return (
     <aside
@@ -130,6 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   : 'text-sidebar-foreground hover:bg-accent hover:text-accent-foreground'
               )}
               aria-current={activePage === item.id ? 'page' : undefined}
+              title={collapsed ? item.label : ''}
             >
               <item.icon className={cn('h-5 w-5 shrink-0', collapsed ? '' : 'mr-3')} />
               {!collapsed && <span>{item.label}</span>}

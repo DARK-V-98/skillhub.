@@ -36,9 +36,12 @@ import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
 import { signOut } from '@/firebase/auth';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface NavbarProps {
   onMenuToggle: () => void;
+  isMobileSidebarOpen: boolean;
+  onMobileMenuToggle: () => void;
   darkMode: boolean;
   onDarkModeToggle: () => void;
 }
@@ -57,7 +60,7 @@ const roleColors: Record<UserRole, string> = {
   admin: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
-const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, darkMode, onDarkModeToggle }) => {
+const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, onMobileMenuToggle, darkMode, onDarkModeToggle }) => {
   const { currentRole, setCurrentRole } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useUser();
@@ -68,19 +71,21 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, darkMode, onDarkModeToggl
     <header className="fixed top-0 left-0 right-0 h-16 bg-background/95 backdrop-blur border-b border-border z-50">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
         {/* Left section */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {user && (
             <Button
                 variant="ghost"
                 size="icon"
-                onClick={onMenuToggle}
+                onClick={onMobileMenuToggle}
                 className="lg:hidden btn-touch-target"
                 aria-label="Toggle menu"
             >
                 <Menu className="h-5 w-5" />
             </Button>
           )}
-          <Logo size="md" />
+          <Link href={user ? '/dashboard' : '/'}>
+            <Logo size="md" />
+          </Link>
         </div>
 
         {user && (

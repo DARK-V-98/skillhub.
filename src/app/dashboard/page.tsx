@@ -11,14 +11,18 @@ import SponsorDashboard from '@/components/dashboards/SponsorDashboard';
 import AdminDashboard from '@/components/dashboards/AdminDashboard';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
-import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
+import Logo from '@/components/Logo';
+
 
 const DashboardContent: React.FC = () => {
   const { currentRole } = useRole();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(false);
   const { user, loading } = useUser();
@@ -51,7 +55,7 @@ const DashboardContent: React.FC = () => {
   const renderDashboard = () => {
     if (loading || !user) {
       return (
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       );
@@ -69,6 +73,11 @@ const DashboardContent: React.FC = () => {
     }
   };
 
+  const handleNavigate = (page: string) => {
+    setActivePage(page);
+    setIsMobileSidebarOpen(false);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 top-4 left-4 bg-background p-2 rounded-md">
@@ -79,18 +88,39 @@ const DashboardContent: React.FC = () => {
       
       <Navbar
         onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isMobileSidebarOpen={isMobileSidebarOpen}
+        onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         darkMode={darkMode}
         onDarkModeToggle={() => setDarkMode(!darkMode)}
       />
       
-      {user && (
+      <div className="lg:hidden">
+        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-64 bg-sidebar">
+            <div className="flex flex-col h-full">
+              <div className="p-4 border-b border-sidebar-border">
+                <Logo size="md" />
+              </div>
+              <Sidebar
+                collapsed={false}
+                onToggle={() => {}}
+                activePage={activePage}
+                onNavigate={handleNavigate}
+                isMobile={true}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+      
+      <div className="hidden lg:block">
         <Sidebar
-            collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-            activePage={activePage}
-            onNavigate={setActivePage}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          activePage={activePage}
+          onNavigate={handleNavigate}
         />
-      )}
+      </div>
       
       <main
         id="main-content"
