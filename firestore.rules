@@ -38,7 +38,7 @@ service cloud.firestore {
 
     match /liveClasses/{classId} {
         allow read;
-        allow create, update, delete: if isSignedIn() && isOneOf-Roles(request.auth.uid, ['admin', 'teacher', 'developer']);
+        allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
     }
 
     match /liveClasses/{classId}/messages/{messageId} {
@@ -81,10 +81,6 @@ service cloud.firestore {
     
     match /studyRooms/{roomId}/messages/{messageId} {
         allow read, create: if isSignedIn();
-    }
-
-    match /studyRooms/{roomId}/whiteboard/{docId} {
-      allow read, write: if isSignedIn();
     }
 
     match /studyRooms/{roomId}/calls/{callId} {
