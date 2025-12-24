@@ -103,7 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
         </div>
         
         {/* Center and Right section, only shows when user is logged in */}
-        {user && userProfile && (
+        {user && (
           <>
             {/* Center section - Search */}
             <div className="hidden md:flex flex-1 max-w-xl mx-8">
