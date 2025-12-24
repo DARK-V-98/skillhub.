@@ -1,11 +1,12 @@
 'use client';
 import React from 'react';
-import { Star, Users, Clock, Play } from 'lucide-react';
+import { Star, Users, Clock, Play, User } from 'lucide-react';
 import { Course } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 interface CourseCardProps {
   course: Course;
@@ -58,13 +59,12 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <Image
-            src={course.instructorAvatar}
-            alt={course.instructor}
-            width={24}
-            height={24}
-            className="rounded-full object-cover"
-          />
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={course.instructorAvatar} alt={course.instructor} />
+            <AvatarFallback>
+              <User className="h-4 w-4" />
+            </AvatarFallback>
+          </Avatar>
           <span className="text-sm text-muted-foreground">{course.instructor}</span>
         </div>
 
