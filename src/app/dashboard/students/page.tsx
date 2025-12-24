@@ -24,7 +24,9 @@ export default function StudentsPage() {
     if (!teacherCourses) return [];
     const ids = new Set<string>();
     teacherCourses.forEach(course => {
-      course.students.forEach(studentId => ids.add(studentId));
+      if (Array.isArray(course.students)) {
+        course.students.forEach(studentId => ids.add(studentId));
+      }
     });
     return Array.from(ids);
   }, [teacherCourses]);
@@ -41,7 +43,7 @@ export default function StudentsPage() {
   const tableData = React.useMemo(() => {
     if (!students || !teacherCourses) return [];
     return students.map(student => {
-        const enrolledCourse = teacherCourses.find(c => c.students.includes(student.id));
+        const enrolledCourse = teacherCourses.find(c => Array.isArray(c.students) && c.students.includes(student.id));
         return {
             ...student,
             courseTitle: enrolledCourse?.title || 'Unknown Course'
