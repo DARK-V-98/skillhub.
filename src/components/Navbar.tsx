@@ -99,7 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                 <Menu className="h-5 w-5" />
             </Button>
           )}
-          <Link href={user ? '/dashboard' : '/'}>
+          <Link href="/">
             <Logo size="lg" showText={false} />
           </Link>
         </div>
