@@ -91,6 +91,26 @@
     --sidebar-border: 160 20% 18%;
     --sidebar-ring: 160 72% 50%;
   }
+
+  .high-contrast {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 160 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 80%;
+    --accent: 160 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --border: 0 0% 40%;
+    --input: 0 0% 20%;
+    --ring: 160 100% 50%;
+  }
 }
 
 @layer base {
@@ -102,9 +122,13 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  .font-dyslexic {
-    font-family: 'OpenDyslexic', 'Comic Sans MS', cursive !important;
+  html.font-dyslexic {
+    font-family: var(--font-dyslexic) !important;
   }
+
+  html.filter-protanopia { filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'protanopia\'><feColorMatrix type=\'matrix\' values=\'0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0\' in=\'SourceGraphic\' /></filter></svg>#protanopia"); }
+  html.filter-deuteranopia { filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'deuteranopia\'><feColorMatrix type=\'matrix\' values=\'0.625,0.375,0,0,0 0.7,0.3,0,0,0 0,0.3,0.7,0,0 0,0,0,1,0\' in=\'SourceGraphic\' /></filter></svg>#deuteranopia"); }
+  html.filter-tritanopia { filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'tritanopia\'><feColorMatrix type=\'matrix\' values=\'0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0\' in=\'SourceGraphic\' /></filter></svg>#tritanopia"); }
 
   [data-reduced-motion="true"] *,
   [data-reduced-motion="true"] *::before,

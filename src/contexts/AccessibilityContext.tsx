@@ -30,10 +30,13 @@ export const AccessibilityProvider: React.FC<{ children: ReactNode }> = ({ child
     try {
       const saved = localStorage.getItem('accessibility-settings');
       if (saved) {
-        setSettings(JSON.parse(saved));
+        const parsedSettings = JSON.parse(saved);
+        setSettings(parsedSettings);
       }
     } catch (error) {
       console.error("Failed to parse accessibility settings from localStorage", error);
+      // Fallback to default settings
+      setSettings(defaultSettings);
     }
   }, []);
 
@@ -43,30 +46,18 @@ export const AccessibilityProvider: React.FC<{ children: ReactNode }> = ({ child
       
       const root = document.documentElement;
       
-      root.style.setProperty('--font-size-base', `${settings.fontSize}px`);
+      root.style.fontSize = `${settings.fontSize}px`;
       
-      if (settings.highContrast) {
-        root.classList.add('high-contrast');
-      } else {
-        root.classList.remove('high-contrast');
-      }
+      root.classList.toggle('high-contrast', settings.highContrast);
       
-      if (settings.dyslexicFont) {
-        root.classList.add('font-dyslexic');
-      } else {
-        root.classList.remove('font-dyslexic');
-      }
+      root.classList.toggle('font-dyslexic', settings.dyslexicFont);
 
       root.classList.remove('filter-protanopia', 'filter-deuteranopia', 'filter-tritanopia');
       if (settings.colorBlindFilter !== 'none') {
         root.classList.add(`filter-${settings.colorBlindFilter}`);
       }
       
-      if (settings.reducedMotion) {
-        root.setAttribute('data-reduced-motion', 'true');
-      } else {
-        root.removeAttribute('data-reduced-motion');
-      }
+      root.setAttribute('data-reduced-motion', String(settings.reducedMotion));
     }
   }, [settings, isMounted]);
 
@@ -79,6 +70,7 @@ export const AccessibilityProvider: React.FC<{ children: ReactNode }> = ({ child
   };
   
   if (!isMounted) {
+    // Return null on the server to avoid hydration mismatch
     return null;
   }
 

@@ -7,7 +7,11 @@ import { RoleProvider } from '@/contexts/RoleContext';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const openSans = Open_Sans({ subsets: ['latin'], variable: '--font-dyslexic' });
+const openSans = Open_Sans({ 
+  subsets: ['latin'], 
+  variable: '--font-dyslexic',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'SkillHub',
