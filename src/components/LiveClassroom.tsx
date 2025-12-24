@@ -81,18 +81,6 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
   const allStreams = localStream ? [{ id: 'local', stream: localStream, user: { id: user!.uid, name: `${user!.displayName} (You)`} }, ...remoteStreams] : remoteStreams;
 
-  const handleJoinLeaveNotifications = useCallback((newParticipants: UserProfile[], oldParticipants: UserProfile[]) => {
-      if (!user) return;
-  
-      const oldIds = new Set(oldParticipants.map(p => p.id));
-      const newIds = new Set(newParticipants.map(p => p.id));
-  
-      const joined = newParticipants.filter(p => !oldIds.has(p.id) && p.id !== user.uid);
-      const left = oldParticipants.filter(p => !newIds.has(p.id) && p.id !== user.uid);
-  
-      return { joined, left };
-  }, [user]);
-
   useEffect(() => {
     if (!firestore || !user) return;
 
@@ -127,14 +115,15 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
             newParticipantsList.push(doc.data() as UserProfile);
         });
 
-        const oldParticipants = participants;
-        setParticipants(newParticipantsList);
-
-        const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, oldParticipants);
-        
-        joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
-        left.forEach(p => toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" }));
-
+        // Defer notification logic to avoid happening during render
+        setTimeout(() => {
+            setParticipants(oldParticipants => {
+                const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, oldParticipants);
+                joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
+                left.forEach(p => toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" }));
+                return newParticipantsList;
+            });
+        }, 0);
     });
 
     // Cleanup function
@@ -142,7 +131,21 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       leaveRoom();
       unsubscribeParticipants();
     };
-  }, [firestore, user, liveClass.id, toast, handleJoinLeaveNotifications]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firestore, user, liveClass.id]);
+
+
+  const handleJoinLeaveNotifications = useCallback((newParticipants: UserProfile[], oldParticipants: UserProfile[]) => {
+      if (!user) return { joined: [], left: [] };
+  
+      const oldIds = new Set(oldParticipants.map(p => p.id));
+      const newIds = new Set(newParticipants.map(p => p.id));
+  
+      const joined = newParticipants.filter(p => !oldIds.has(p.id) && p.id !== user.uid);
+      const left = oldParticipants.filter(p => !newIds.has(p.id) && p.id !== user.uid);
+  
+      return { joined, left };
+  }, [user]);
 
 
   // Setup media and signaling
@@ -322,9 +325,9 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] bg-black rounded-lg overflow-hidden relative text-white">
-      <div className="flex-1 flex flex-col relative transition-all duration-300" style={{ marginRight: (isChatOpen || isParticipantsOpen) ? '320px' : '0' }}>
-        <div className="flex-1 overflow-auto p-2">
+    <div className="flex h-[calc(100vh-8rem)] bg-black rounded-lg overflow-hidden text-white">
+      <div className="flex-1 flex flex-col relative">
+        <div className="flex-1 overflow-auto p-2 relative">
             <div className={cn('grid gap-2 h-full w-full', gridCols, gridRows)}>
                 {allStreams.map(({ id, stream, user: streamUser }) => (
                     <div key={id} className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
@@ -339,122 +342,123 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
                     </div>
                 ))}
             </div>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex justify-center items-center gap-2 sm:gap-4 z-10">
+                <TooltipProvider>
+                    <Tooltip><TooltipTrigger asChild>
+                        <Button onClick={toggleMic} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
+                            {isMicOn ? <Mic /> : <MicOff />}
+                        </Button>
+                    </TooltipTrigger><TooltipContent>{isMicOn ? 'Mute' : 'Unmute'}</TooltipContent></Tooltip>
+
+                    <Tooltip><TooltipTrigger asChild>
+                        <Button onClick={toggleCamera} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
+                            {isCameraOn ? <Video /> : <VideoOff />}
+                        </Button>
+                    </TooltipTrigger><TooltipContent>{isCameraOn ? 'Stop Camera' : 'Start Camera'}</TooltipContent></Tooltip>
+
+                    <Tooltip><TooltipTrigger asChild>
+                        <Button onClick={handleScreenShare} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isScreenSharing && "bg-primary hover:bg-primary/90")}>
+                            {isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
+                        </Button>
+                    </TooltipTrigger><TooltipContent>{isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</TooltipContent></Tooltip>
+
+                    <Tooltip><TooltipTrigger asChild>
+                        <Button onClick={() => { setIsParticipantsOpen(false); setIsChatOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isChatOpen && 'bg-primary/80')}>
+                            <MessageSquare />
+                        </Button>
+                    </TooltipTrigger><TooltipContent>Chat</TooltipContent></Tooltip>
+
+                    <Tooltip><TooltipTrigger asChild>
+                        <Button onClick={() => { setIsChatOpen(false); setIsParticipantsOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white relative", isParticipantsOpen && 'bg-primary/80')}>
+                            <Users />
+                            <Badge className="absolute -top-1 -right-1 px-1.5 h-5">{participants.length}</Badge>
+                        </Button>
+                    </TooltipTrigger><TooltipContent>Participants</TooltipContent></Tooltip>
+                </TooltipProvider>
+
+                <Button onClick={hangUp} variant="destructive" size="icon" className="rounded-full w-16 h-12 ml-4">
+                <PhoneOff />
+                </Button>
+            </div>
         </div>
       </div>
 
-      <div className={cn("absolute top-0 right-0 h-full bg-gray-900/80 backdrop-blur-sm transition-transform duration-300 overflow-hidden flex flex-col w-80", isChatOpen || isParticipantsOpen ? 'translate-x-0' : 'translate-x-full')}>
-        {isChatOpen && (
-            <TooltipProvider>
-                <div className="p-4 border-b border-gray-700">
-                    <h3 className="text-white font-semibold">Live Chat</h3>
-                </div>
-                <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-                    {messages.map(msg => {
-                        const isYou = msg.authorId === user?.uid;
-                        const messageDate = msg.createdAt ? new Date(msg.createdAt.seconds * 1000) : new Date();
+      {(isChatOpen || isParticipantsOpen) && (
+          <div className="w-80 flex-shrink-0 bg-gray-900/80 backdrop-blur-sm flex flex-col">
+            {isChatOpen && (
+                <TooltipProvider>
+                    <div className="p-4 border-b border-gray-700">
+                        <h3 className="text-white font-semibold">Live Chat</h3>
+                    </div>
+                    <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+                        {messages.map(msg => {
+                            const isYou = msg.authorId === user?.uid;
+                            const messageDate = msg.createdAt ? new Date(msg.createdAt.seconds * 1000) : new Date();
 
-                        return (
-                         <div key={msg.id} className={cn('flex items-end gap-2', isYou && 'justify-end')}>
-                             {!isYou && (
-                                <Avatar className="w-8 h-8 shrink-0">
-                                    <AvatarImage src={msg.authorAvatar}/>
-                                    <AvatarFallback>{msg.authorName?.charAt(0) || 'U'}</AvatarFallback>
-                                </Avatar>
-                             )}
-                            <div className={cn("flex flex-col gap-1 w-full max-w-[280px]", isYou && 'items-end')}>
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-xs font-semibold text-white">{isYou ? 'You' : msg.authorName}</span>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <span className="text-xs font-normal text-gray-400 hover:text-gray-200">
-                                                {formatDistanceToNow(messageDate, { addSuffix: true })}
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top">
-                                            {format(messageDate, "PPP, p")}
-                                        </TooltipContent>
-                                    </Tooltip>
+                            return (
+                            <div key={msg.id} className={cn('flex items-end gap-2', isYou && 'justify-end')}>
+                                {!isYou && (
+                                    <Avatar className="w-8 h-8 shrink-0">
+                                        <AvatarImage src={msg.authorAvatar}/>
+                                        <AvatarFallback>{msg.authorName?.charAt(0) || 'U'}</AvatarFallback>
+                                    </Avatar>
+                                )}
+                                <div className={cn("flex flex-col gap-1 w-full max-w-[280px]", isYou && 'items-end')}>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-xs font-semibold text-white">{isYou ? 'You' : msg.authorName}</span>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <span className="text-xs font-normal text-gray-400 hover:text-gray-200">
+                                                    {formatDistanceToNow(messageDate, { addSuffix: true })}
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">
+                                                {format(messageDate, "PPP, p")}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </div>
+                                    <div className={cn(
+                                        "leading-tight p-3 rounded-2xl text-white text-sm",
+                                        isYou ? "bg-primary text-primary-foreground rounded-br-none" : "bg-gray-700 rounded-bl-none"
+                                    )}>
+                                    <p className="font-normal">{msg.text}</p>
+                                    </div>
                                 </div>
-                                <div className={cn(
-                                    "leading-tight p-3 rounded-2xl text-white text-sm",
-                                    isYou ? "bg-primary text-primary-foreground rounded-br-none" : "bg-gray-700 rounded-bl-none"
-                                )}>
-                                   <p className="font-normal">{msg.text}</p>
-                                </div>
+                                {isYou && (
+                                    <Avatar className="w-8 h-8 shrink-0">
+                                        <AvatarImage src={msg.authorAvatar}/>
+                                        <AvatarFallback>{user?.displayName?.charAt(0) || 'Y'}</AvatarFallback>
+                                    </Avatar>
+                                )}
                             </div>
-                            {isYou && (
-                                <Avatar className="w-8 h-8 shrink-0">
-                                    <AvatarImage src={msg.authorAvatar}/>
-                                    <AvatarFallback>{msg.authorName?.charAt(0) || 'Y'}</AvatarFallback>
+                        )})}
+                    </div>
+                    <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-700 flex items-center gap-2">
+                        <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="bg-gray-800 border-gray-700 text-white"/>
+                        <Button type="submit" size="icon" disabled={!newMessage.trim()}><Send className="h-4 w-4"/></Button>
+                    </form>
+                </TooltipProvider>
+            )}
+            {isParticipantsOpen && (
+                <>
+                    <div className="p-4 border-b border-gray-700">
+                        <h3 className="text-white font-semibold">Participants ({participants.length})</h3>
+                    </div>
+                    <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+                        {participants.map(p => (
+                            <div key={p.id} className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={p.avatar} />
+                                    <AvatarFallback>{p.name ? p.name.charAt(0) : 'U'}</AvatarFallback>
                                 </Avatar>
-                             )}
-                        </div>
-                    )})}
-                </div>
-                <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-700 flex items-center gap-2">
-                    <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="bg-gray-800 border-gray-700 text-white"/>
-                    <Button type="submit" size="icon" disabled={!newMessage.trim()}><Send className="h-4 w-4"/></Button>
-                </form>
-            </TooltipProvider>
-        )}
-        {isParticipantsOpen && (
-            <>
-                <div className="p-4 border-b border-gray-700">
-                    <h3 className="text-white font-semibold">Participants ({participants.length})</h3>
-                </div>
-                <div className="flex-1 p-4 space-y-3 overflow-y-auto">
-                    {participants.map(p => (
-                        <div key={p.id} className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={p.avatar} />
-                                <AvatarFallback>{p.name ? p.name.charAt(0) : 'U'}</AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{p.name || 'Anonymous User'} {p.id === user?.uid ? '(You)' : ''}</span>
-                        </div>
-                    ))}
-                </div>
-            </>
-        )}
-      </div>
-
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex justify-center items-center gap-2 sm:gap-4 z-10">
-        <TooltipProvider>
-            <Tooltip><TooltipTrigger asChild>
-                <Button onClick={toggleMic} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
-                    {isMicOn ? <Mic /> : <MicOff />}
-                </Button>
-            </TooltipTrigger><TooltipContent>{isMicOn ? 'Mute' : 'Unmute'}</TooltipContent></Tooltip>
-
-            <Tooltip><TooltipTrigger asChild>
-                <Button onClick={toggleCamera} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
-                    {isCameraOn ? <Video /> : <VideoOff />}
-                </Button>
-            </TooltipTrigger><TooltipContent>{isCameraOn ? 'Stop Camera' : 'Start Camera'}</TooltipContent></Tooltip>
-
-            <Tooltip><TooltipTrigger asChild>
-                <Button onClick={handleScreenShare} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isScreenSharing && "bg-primary hover:bg-primary/90")}>
-                    {isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
-                </Button>
-            </TooltipTrigger><TooltipContent>{isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</TooltipContent></Tooltip>
-
-            <Tooltip><TooltipTrigger asChild>
-                 <Button onClick={() => { setIsParticipantsOpen(false); setIsChatOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isChatOpen && 'bg-primary/80')}>
-                    <MessageSquare />
-                </Button>
-            </TooltipTrigger><TooltipContent>Chat</TooltipContent></Tooltip>
-
-            <Tooltip><TooltipTrigger asChild>
-                <Button onClick={() => { setIsChatOpen(false); setIsParticipantsOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white relative", isParticipantsOpen && 'bg-primary/80')}>
-                    <Users />
-                    <Badge className="absolute -top-1 -right-1 px-1.5 h-5">{participants.length}</Badge>
-                </Button>
-            </TooltipTrigger><TooltipContent>Participants</TooltipContent></Tooltip>
-        </TooltipProvider>
-
-        <Button onClick={hangUp} variant="destructive" size="icon" className="rounded-full w-16 h-12 ml-4">
-          <PhoneOff />
-        </Button>
-      </div>
+                                <span className="font-medium">{p.name || 'Anonymous User'} {p.id === user?.uid ? '(You)' : ''}</span>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+          </div>
+      )}
     </div>
   );
 };
