@@ -99,7 +99,7 @@ export interface CommunityPost {
     authorId: string;
     authorName: string;
     authorAvatar: string;
-    createdAt: string; // ISO 8601 date string
+    createdAt: any; // Can be a server timestamp
     upvotes: number;
     downvotes: number;
     userVote?: 'up' | 'down';

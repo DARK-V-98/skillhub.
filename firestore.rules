@@ -36,6 +36,10 @@ service cloud.firestore {
         allow create, update, delete: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));
     }
 
+    match /liveClasses/{classId}/messages/{messageId} {
+        allow read, create: if isSignedIn();
+    }
+
     match /users/{userId}/achievements/{achievementId} {
         allow read: if isSignedIn() && isOwner(userId);
         allow write: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));

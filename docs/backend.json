@@ -50,6 +50,18 @@
             },
             "required": ["title", "instructor", "startTime", "duration"]
         },
+        "chatMessage": {
+            "title": "Chat Message",
+            "description": "Represents a message in a live class chat.",
+            "type": "object",
+            "properties": {
+                "text": { "type": "string" },
+                "authorName": { "type": "string" },
+                "authorAvatar": { "type": "string", "format": "uri" },
+                "createdAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["text", "authorName", "createdAt"]
+        },
         "achievement": {
             "title": "Achievement",
             "description": "Represents a badge or certificate earned by a user.",
@@ -124,6 +136,10 @@
         "/liveClasses": {
             "schema": { "$ref": "#/entities/liveClass" },
             "description": "Collection of all live classes."
+        },
+        "/liveClasses/{classId}/messages": {
+            "schema": { "$ref": "#/entities/chatMessage" },
+            "description": "Sub-collection of chat messages for a specific live class."
         },
         "/users/{userId}/achievements": {
             "schema": { "$ref": "#/entities/achievement" },
