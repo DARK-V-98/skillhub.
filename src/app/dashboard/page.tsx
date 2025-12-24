@@ -13,9 +13,7 @@ import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import Logo from '@/components/Logo';
 
 
@@ -84,8 +82,6 @@ const DashboardContent: React.FC = () => {
         Skip to main content
       </a>
       
-      <AccessibilityBanner />
-      
       <Navbar
         onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         isMobileSidebarOpen={isMobileSidebarOpen}
@@ -93,6 +89,8 @@ const DashboardContent: React.FC = () => {
         darkMode={darkMode}
         onDarkModeToggle={() => setDarkMode(!darkMode)}
       />
+
+      <AccessibilityBanner />
       
       <div className="lg:hidden">
         <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
@@ -125,7 +123,7 @@ const DashboardContent: React.FC = () => {
       <main
         id="main-content"
         className={cn(
-          'pt-28 min-h-screen transition-all duration-300',
+          'pt-32 min-h-screen transition-all duration-300',
           user && !sidebarCollapsed ? 'lg:pl-64' : (user ? 'lg:pl-16' : '')
         )}
       >

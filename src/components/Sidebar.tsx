@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 h-full bg-sidebar border-r border-border transition-all duration-300 z-40 hidden lg:flex flex-col pt-16',
+        'fixed left-0 top-16 h-[calc(100vh-4rem)] bg-sidebar border-r border-border transition-all duration-300 z-40 hidden lg:flex flex-col',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
