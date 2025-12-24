@@ -4,19 +4,14 @@ import {
   Home, 
   BookOpen, 
   Video, 
-  Trophy, 
   MessageSquare, 
-  Calendar,
   Settings,
   PlusCircle,
   Users,
   BarChart3,
-  DollarSign,
   GraduationCap,
   Heart,
-  FileText,
   Shield,
-  Bell
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { cn } from '@/lib/utils';
@@ -85,7 +80,7 @@ const DashboardNav: React.FC = () => {
     const navItems = getNavItems();
 
     return (
-        <div className="border-b">
+        <div className="border-b hidden md:block">
             <div className="container mx-auto">
                 <nav className="flex items-center gap-1 -mb-px">
                     {navItems.map((item) => (
