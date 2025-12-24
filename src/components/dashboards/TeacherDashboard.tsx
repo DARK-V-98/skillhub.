@@ -29,14 +29,14 @@ const TeacherDashboard: React.FC = () => {
     const coursesQuery = user ? query(collection(firestore, 'courses'), where('instructorId', '==', user.uid)) : null;
     const { data: myCourses, loading: coursesLoading } = useCollection<Course>(coursesQuery);
 
-    const totalStudents = React.useMemo(() => myCourses?.reduce((acc, course) => acc + course.students, 0) || 0, [myCourses]);
-    const courseRevenue = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (course.price * course.students), 0) || 0, [myCourses]);
+    const totalStudents = React.useMemo(() => myCourses?.reduce((acc, course) => acc + course.students.length, 0) || 0, [myCourses]);
+    const courseRevenue = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (course.price * course.students.length), 0) || 0, [myCourses]);
     const averageRating = React.useMemo(() => {
         if (!myCourses || myCourses.length === 0) return 0;
-        const totalRating = myCourses.reduce((acc, course) => acc + course.rating, 0);
-        const ratedCourses = myCourses.filter(c => c.rating > 0).length;
-        if (ratedCourses === 0) return 'N/A';
-        return (totalRating / ratedCourses).toFixed(2);
+        const ratedCourses = myCourses.filter(c => c.rating > 0);
+        if (ratedCourses.length === 0) return 'N/A';
+        const totalRating = ratedCourses.reduce((acc, course) => acc + course.rating, 0);
+        return (totalRating / ratedCourses.length).toFixed(2);
     }, [myCourses]);
 
     if (coursesLoading) {
@@ -147,7 +147,7 @@ const TeacherDashboard: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        {course.students.toLocaleString()} students
+                        {course.students.length.toLocaleString()} students
                       </span>
                       <span className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -155,7 +155,7 @@ const TeacherDashboard: React.FC = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <DollarSign className="h-4 w-4" />
-                        ${(course.students * course.price).toLocaleString()} earned
+                        ${(course.students.length * course.price).toLocaleString()} earned
                       </span>
                     </div>
                   </div>

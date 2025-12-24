@@ -29,6 +29,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
     Advanced: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   };
 
+  const studentProgress = showProgress && course.progress && course.progress[Object.keys(course.progress)[0]] || 0;
+
   return (
     <div
       className={cn(
@@ -47,11 +49,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
         <Badge className={cn('absolute top-3 left-3', levelColors[course.level])}>
           {course.level}
         </Badge>
-        {showProgress && course.progress !== undefined && (
+        {showProgress && studentProgress !== undefined && (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
             <div
               className="h-full bg-primary transition-all duration-500"
-              style={{ width: `${course.progress}%` }}
+              style={{ width: `${studentProgress}%` }}
             />
           </div>
         )}
@@ -79,7 +81,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{course.students.toLocaleString()}</span>
+            <span>{course.students.length.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
@@ -87,11 +89,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </div>
         </div>
 
-        {showProgress && course.progress !== undefined ? (
+        {showProgress && studentProgress !== undefined ? (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium text-primary">{course.progress}%</span>
+              <span className="font-medium text-primary">{studentProgress}%</span>
             </div>
             <Button
               onClick={onContinue}
@@ -99,7 +101,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
               size="lg"
             >
               <Play className="h-4 w-4 mr-2" />
-              {course.progress === 100 ? 'Review' : 'Continue'}
+              {studentProgress === 100 ? 'Review' : 'Continue'}
             </Button>
           </div>
         ) : (

@@ -77,7 +77,8 @@ export default function CreateCoursePage() {
         instructorId: user.uid,
         instructorAvatar: user.photoURL || '',
         rating: 0,
-        students: 0,
+        students: [], // Initialize students as an empty array
+        progress: {}, // Initialize progress as an empty object
         lessonsCount: 0,
       });
 

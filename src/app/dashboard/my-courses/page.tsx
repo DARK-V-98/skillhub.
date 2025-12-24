@@ -19,7 +19,7 @@ export default function MyCoursesPage() {
   const isTeacher = currentRole === 'teacher' || currentRole === 'admin' || currentRole === 'developer';
 
   const coursesQuery = user
-    ? query(collection(firestore, 'courses'), where(isTeacher ? 'instructorId' : 'students', '==', user.uid))
+    ? query(collection(firestore, 'courses'), where(isTeacher ? 'instructorId' : 'students', isTeacher ? '==' : 'array-contains', user.uid))
     : null;
 
   const { data: userCourses, loading: coursesLoading } = useCollection<Course>(coursesQuery);

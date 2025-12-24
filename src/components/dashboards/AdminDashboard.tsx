@@ -36,6 +36,11 @@ const AdminDashboard: React.FC = () => {
   );
 
   const loading = usersLoading || coursesLoading;
+  
+  const totalRevenue = React.useMemo(() => {
+    if (!courses) return 0;
+    return courses.reduce((acc, course) => acc + course.price * course.students.length, 0);
+  }, [courses]);
 
   if (loading) {
     return (
@@ -83,7 +88,7 @@ const AdminDashboard: React.FC = () => {
         />
         <StatCard
           title="Total Revenue"
-          value="$0"
+          value={`$${totalRevenue.toLocaleString()}`}
           icon={DollarSign}
         />
          <StatCard

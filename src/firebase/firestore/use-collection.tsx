@@ -24,6 +24,7 @@ export const useCollection = <T extends DocumentData>(query: Query<T> | null) =>
         });
         setData(data);
         setLoading(false);
+        setError(null);
       },
       (err) => {
         setError(err);
@@ -33,7 +34,10 @@ export const useCollection = <T extends DocumentData>(query: Query<T> | null) =>
     );
 
     return () => unsubscribe();
-  }, [JSON.stringify(query)]);
+  // Using JSON.stringify on the query is a common way to memoize it, but it can be brittle.
+  // For 'in'/'array-contains-any' queries, where the array can change, this is necessary to trigger refetch.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(query?._query)]);
 
   return { data, loading, error };
 };

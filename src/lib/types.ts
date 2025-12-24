@@ -21,8 +21,8 @@ export interface Course {
   instructorAvatar: string;
   thumbnail: string;
   rating: number;
-  students: number;
-  progress?: number;
+  students: string[]; // Changed to array of student IDs
+  progress?: { [studentId: string]: number }; // Progress per student
   price: number;
   duration: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';

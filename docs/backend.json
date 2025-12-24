@@ -28,8 +28,8 @@
                 "instructorAvatar": { "type": "string", "format": "uri" },
                 "thumbnail": { "type": "string", "format": "uri" },
                 "rating": { "type": "number" },
-                "students": { "type": "number" },
-                "progress": { "type": "number" },
+                "students": { "type": "array", "items": { "type": "string" } },
+                "progress": { "type": "object" },
                 "price": { "type": "number" },
                 "duration": { "type": "string" },
                 "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"] },
@@ -166,7 +166,7 @@
             "schema": { "$ref": "#/entities/course" },
             "description": "Collection of all available courses."
         },
-        "/liveClasses": {
+        "/liveClasses/{classId}": {
             "schema": { "$ref": "#/entities/liveClass" },
             "description": "Collection of all live classes."
         },
@@ -220,5 +220,3 @@
         }
     }
 }
-
-    
