@@ -25,7 +25,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Whiteboard from './Whiteboard';
+import dynamic from 'next/dynamic';
+
+const Whiteboard = dynamic(() => import('./Whiteboard'), { ssr: false });
 
 
 interface StudyRoomClientProps {

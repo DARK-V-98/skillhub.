@@ -26,7 +26,9 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Input } from './ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Whiteboard from '@/components/study/Whiteboard';
+import dynamic from 'next/dynamic';
+
+const Whiteboard = dynamic(() => import('@/components/study/Whiteboard'), { ssr: false });
 
 interface LiveClassroomProps {
   liveClass: LiveClass;
