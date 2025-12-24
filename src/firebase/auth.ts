@@ -21,18 +21,18 @@ export const signInWithGoogle = async (): Promise<User> => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // Save or update user in Firestore
+    // Save or update user in Firestore, ensuring a role exists
     const firestore = getFirestore(app);
     const userRef = doc(firestore, 'users', user.uid);
     const userDoc = await getDoc(userRef);
 
-    if (!userDoc.exists()) {
-      // If user is new, create their profile with default role
+    if (!userDoc.exists() || !userDoc.data()?.role) {
+      // If user is new OR an existing user is missing a role, set it.
       await setDoc(userRef, {
           name: user.displayName,
           email: user.email,
           avatar: user.photoURL,
-          role: 'user' // Default role for new Google sign-in
+          role: 'user' // Default role
       }, { merge: true });
     }
     
@@ -48,7 +48,7 @@ export const signUpWithEmailAndPassword = async (email: string, password: string
     const userCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
-    // Save user to Firestore
+    // Save user to Firestore with a default role
     const firestore = getFirestore(app);
     const userRef = doc(firestore, 'users', user.uid);
     await setDoc(userRef, {
@@ -56,7 +56,7 @@ export const signUpWithEmailAndPassword = async (email: string, password: string
         email: user.email,
         avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
         role: 'user' // Default role for new sign-ups
-    }, { merge: true });
+    });
 
     return user;
 };
@@ -66,14 +66,19 @@ export const signInWithEmailAndPassword = async (email: string, password: string
     const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Ensure user data is in Firestore, merge to not overwrite existing role
+    // Ensure user data is in Firestore and has a role
     const firestore = getFirestore(app);
     const userRef = doc(firestore, 'users', user.uid);
-    await setDoc(userRef, {
-        name: user.displayName || user.email?.split('@')[0],
-        email: user.email,
-        avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
-    }, { merge: true });
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists() || !userDoc.data()?.role) {
+       await setDoc(userRef, {
+            name: user.displayName || user.email?.split('@')[0],
+            email: user.email,
+            avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+            role: 'user'
+        }, { merge: true });
+    }
 
     return userCredential.user;
 };
