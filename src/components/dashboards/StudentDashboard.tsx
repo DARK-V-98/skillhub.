@@ -38,9 +38,9 @@ const StudentDashboard: React.FC = () => {
     firestore ? collection(firestore, 'liveClasses') : null
   );
   
-  const { data: achievements, loading: achievementsLoading } = useCollection<Achievement>(
-    firestore ? query(collection(firestore, 'users', user?.uid || 'null'), 'achievements') : null
-  );
+  const achievementsQuery = user && firestore ? query(collection(firestore, 'users', user.uid, 'achievements')) : null;
+  const { data: achievements, loading: achievementsLoading } = useCollection<Achievement>(achievementsQuery);
+
 
   const upcomingClasses = liveClasses?.filter(c => new Date(c.startTime) > new Date()).slice(0, 2) || [];
   const liveNow = liveClasses?.filter(c => new Date(c.startTime) <= new Date() && c.isLive) || [];
