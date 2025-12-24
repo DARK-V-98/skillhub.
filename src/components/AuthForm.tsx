@@ -8,10 +8,11 @@ import { useToast } from '@/hooks/use-toast';
 import { FirebaseError } from 'firebase/app';
 import Logo from './Logo';
 import Image from 'next/image';
-import { ArrowLeft, Checkbox } from 'lucide-react';
-import { Checkbox as CheckboxPrimitive } from '@/components/ui/checkbox';
+import { ArrowLeft } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useRouter } from 'next/navigation';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -37,6 +38,7 @@ export const AuthForm = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { toast } = useToast();
+  const router = useRouter();
 
   const loginImage = PlaceHolderImages.find(p => p.id === 'login-bg');
 
@@ -49,11 +51,12 @@ export const AuthForm = () => {
           return;
         }
         await signUpWithEmailAndPassword(email, password);
-        toast({ title: 'Success', description: 'Account created successfully. Please sign in.' });
-        setIsSignUp(false);
+        toast({ title: 'Success', description: 'Account created successfully! Redirecting...' });
+        router.push('/dashboard');
       } else {
         await signInWithEmailAndPassword(email, password);
-        toast({ title: 'Success', description: 'Signed in successfully.' });
+        toast({ title: 'Success', description: 'Signed in successfully! Redirecting...' });
+        router.push('/dashboard');
       }
     } catch (error) {
       if (error instanceof FirebaseError) {
@@ -67,7 +70,7 @@ export const AuthForm = () => {
   };
 
   const formTitle = isSignUp ? 'Create an Account' : 'Login to SkillHub';
-  const formDescription = isSignUp ? 'Join our community of learners.' : "Don't have an account?";
+  const formDescription = isSignUp ? 'Already have an account?' : "Don't have an account?";
   const linkText = isSignUp ? 'Login now' : 'Create one now';
   const buttonText = isSignUp ? 'Create Account' : 'Login';
 
@@ -127,7 +130,7 @@ export const AuthForm = () => {
           {!isSignUp && (
               <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                      <CheckboxPrimitive id="remember-me" />
+                      <Checkbox id="remember-me" />
                       <Label htmlFor="remember-me" className="text-sm font-normal">Remember me</Label>
                   </div>
                   <Link href="#" className="text-sm text-primary hover:underline">Forgot password?</Link>
