@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LiveClass, UserProfile } from '@/lib/types';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
@@ -18,7 +18,7 @@ import {
   increment,
 } from 'firebase/firestore';
 import { Button } from './ui/button';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users, LayoutGrid } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -69,68 +69,71 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
-  const participantsRef = useRef<UserProfile[]>([]);
+  
+  const handleJoinLeaveNotifications = useCallback((newParticipantsList: UserProfile[], currentParticipants: UserProfile[]) => {
+    if (!user) return;
+    const currentIds = new Set(currentParticipants.map(p => p.id));
+    const newIds = new Set(newParticipantsList.map(p => p.id));
 
-  useEffect(() => {
-    participantsRef.current = participants;
-  }, [participants]);
+    const joined = newParticipantsList.filter(p => !currentIds.has(p.id) && p.id !== user.uid);
+    const left = currentParticipants.filter(p => !newIds.has(p.id) && p.id !== user.uid);
+
+    joined.forEach(p => {
+      toast({ title: `${p.name || 'A user'} has joined.` });
+    });
+
+    left.forEach(p => {
+      toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" });
+    });
+  }, [toast, user]);
 
   useEffect(() => {
     if (!firestore || !user) return;
-  
+
     const roomRef = doc(firestore, 'liveClasses', liveClass.id);
     const participantRef = doc(roomRef, 'participants', user.uid);
-  
+
     const joinRoom = async () => {
       await setDoc(participantRef, {
-        uid: user.uid,
+        id: user.uid,
         name: user.displayName,
         avatar: user.photoURL,
         joinedAt: serverTimestamp(),
-      });
+      }, { merge: true });
       await updateDoc(roomRef, { participantCount: increment(1) });
       toast({ title: "You have joined the class", variant: "default" });
     };
-  
+
     const leaveRoom = async () => {
-      await deleteDoc(participantRef);
-      await updateDoc(roomRef, { participantCount: increment(-1) });
+      try {
+        await deleteDoc(participantRef);
+        await updateDoc(roomRef, { participantCount: increment(-1) });
+      } catch (error) {
+        // Ignore errors on leaving, e.g. if doc already deleted.
+      }
     };
-  
+
     joinRoom();
-  
+
     const unsubscribeParticipants = onSnapshot(collection(roomRef, 'participants'), (snapshot) => {
-      const newParticipantsList: UserProfile[] = [];
-      snapshot.forEach(doc => {
-          newParticipantsList.push(doc.data() as UserProfile);
-      });
+        const newParticipantsList: UserProfile[] = [];
+        snapshot.forEach(doc => {
+            newParticipantsList.push(doc.data() as UserProfile);
+        });
 
-      const currentParticipants = participantsRef.current;
-      const currentIds = new Set(currentParticipants.map(p => p.id));
-      const newIds = new Set(newParticipantsList.map(p => p.id));
-
-      newParticipantsList.forEach(p => {
-        if (!currentIds.has(p.id) && p.id !== user.uid) {
-          toast({ title: `${p.name} has joined.` });
-        }
-      });
-      
-      currentParticipants.forEach(p => {
-        if (!newIds.has(p.id) && p.id !== user.uid) {
-          toast({ title: `${p.name} has left.`, variant: "destructive" });
-        }
-      });
-      
-      setParticipants(newParticipantsList);
+        setParticipants(currentParticipants => {
+            handleJoinLeaveNotifications(newParticipantsList, currentParticipants);
+            return newParticipantsList;
+        });
     });
-  
+
     // Cleanup function
     return () => {
       leaveRoom();
       unsubscribeParticipants();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firestore, user, liveClass.id, toast]);
+  }, [firestore, user, liveClass.id, toast, handleJoinLeaveNotifications]);
+
 
   // Setup media and signaling
   useEffect(() => {
@@ -296,9 +299,9 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
     router.push('/dashboard/live-classes');
   };
 
-  const allStreamsCount = remoteStreams.length + 1;
-  const gridCols = allStreamsCount <= 4 ? 'grid-cols-2' : 'grid-cols-3';
-  const gridRows = allStreamsCount <= 2 ? 'grid-rows-1' : 'grid-rows-2';
+  const allStreamsCount = remoteStreams.length + (localStream ? 1 : 0);
+  const gridCols = `grid-cols-${Math.min(Math.ceil(Math.sqrt(allStreamsCount)), 4)}`;
+  const gridRows = `grid-rows-${Math.min(Math.ceil(allStreamsCount / Math.ceil(Math.sqrt(allStreamsCount))), 4)}`;
 
 
   return (
@@ -306,10 +309,12 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       <div className="flex-1 flex flex-col relative transition-all duration-300" style={{ marginRight: (isChatOpen || isParticipantsOpen) ? '320px' : '0' }}>
         <div className="flex-1 overflow-auto p-2">
             <div className={cn('grid gap-2 h-full w-full', gridCols, gridRows)}>
-                <div className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
-                    <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                    <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
-                </div>
+                {localStream && (
+                    <div className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
+                        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
+                    </div>
+                )}
                 {remoteStreams.map((stream, index) => (
                     <div key={index} className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
                         <video ref={el => { if (el) el.srcObject = stream; }} autoPlay playsInline className="w-full h-full object-cover" />
@@ -331,7 +336,7 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
                          <div key={msg.id} className="flex items-start gap-2.5">
                             <Avatar className="w-8 h-8">
                                 <AvatarImage src={msg.authorAvatar}/>
-                                <AvatarFallback>{msg.authorName.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{msg.authorName?.charAt(0) || 'U'}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col gap-1 w-full max-w-[320px]">
                                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -361,9 +366,9 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
                         <div key={p.id} className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
                                 <AvatarImage src={p.avatar} />
-                                <AvatarFallback>{p.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{p.name?.charAt(0) || 'U'}</AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">{p.name} {p.id === user?.uid ? '(You)' : ''}</span>
+                            <span className="font-medium">{p.name || 'Anonymous User'} {p.id === user?.uid ? '(You)' : ''}</span>
                         </div>
                     ))}
                 </div>
