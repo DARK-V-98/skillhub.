@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState } from 'react';
 import { 
@@ -36,7 +37,7 @@ import { signOut } from '@/firebase/auth';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc } from 'firebase/firestore';
@@ -76,7 +77,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
 
   const currentRole = userProfile?.role ?? 'student';
 
-  const notificationsQuery = user ? query(collection(firestore, `users/${user.uid}/notifications`)) : null;
+  const notificationsQuery = user ? query(collection(firestore, `users/${user.uid}/notifications`), orderBy('timestamp', 'desc')) : null;
   const { data: notifications } = useCollection<Notification>(notificationsQuery);
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
 
@@ -102,7 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
         </div>
         
         {/* Center and Right section, only shows when user is logged in */}
-        {user && (
+        {user && userProfile && (
           <>
             {/* Center section - Search */}
             <div className="hidden md:flex flex-1 max-w-xl mx-8">
@@ -249,15 +250,9 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
-                    <Link href="/dashboard/profile">
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
                     <Link href="/dashboard/settings">
                       <Settings className="h-4 w-4 mr-2" />
-                      Settings
+                      Profile & Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
