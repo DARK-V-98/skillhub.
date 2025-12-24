@@ -114,3 +114,12 @@ export interface CommunityPost {
     direction: 'up' | 'down';
   }
 
+export interface StudyRoom {
+    id: string;
+    name: string;
+    description?: string;
+    createdBy: string;
+    creatorName: string;
+    createdAt: any; // ServerTimestamp
+    participantCount: number;
+}

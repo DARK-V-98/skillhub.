@@ -64,5 +64,21 @@ service cloud.firestore {
     match /votes/{voteId} {
       allow read, write: if isSignedIn();
     }
+
+    match /studyRooms/{roomId} {
+        allow read, create;
+        allow update: if isSignedIn();
+    }
+    
+    match /studyRooms/{roomId}/messages/{messageId} {
+        allow read, create: if isSignedIn();
+    }
+
+    match /studyRooms/{roomId}/calls/{callId} {
+      allow read, write: if isSignedIn();
+    }
+     match /studyRooms/{roomId}/{path=**} {
+      allow read, write: if isSignedIn();
+    }
   }
 }

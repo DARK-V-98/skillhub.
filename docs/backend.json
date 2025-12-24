@@ -1,3 +1,4 @@
+
 {
     "entities": {
         "userProfile": {
@@ -134,6 +135,20 @@
                 "userId": { "type": "string" }
             },
             "required": ["title", "message", "type", "timestamp", "userId"]
+        },
+        "studyRoom": {
+            "title": "Study Room",
+            "description": "A virtual room for collaborative study.",
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "description": { "type": "string" },
+                "createdBy": { "type": "string" },
+                "creatorName": { "type": "string" },
+                "createdAt": { "type": "string", "format": "date-time" },
+                "participantCount": { "type": "number" }
+            },
+            "required": ["name", "createdBy", "creatorName", "createdAt"]
         }
     },
     "auth": {
@@ -175,6 +190,18 @@
         "/votes": {
             "schema": { "$ref": "#/entities/communityVote" },
             "description": "Top-level collection for all votes to ensure atomic operations and easier querying."
+        },
+        "/studyRooms": {
+            "schema": { "$ref": "#/entities/studyRoom" },
+            "description": "Collection of all virtual study rooms."
+        },
+        "/studyRooms/{roomId}/messages": {
+            "schema": { "$ref": "#/entities/chatMessage" },
+            "description": "Sub-collection of chat messages for a specific study room."
+        },
+        "/studyRooms/{roomId}/calls/{callId}": {
+            "schema": { "type": "object" },
+            "description": "Signaling document for WebRTC calls."
         }
     }
 }

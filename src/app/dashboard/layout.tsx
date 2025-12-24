@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
-import { Loader2, Home, BookOpen, Video, MessageSquare, Settings } from 'lucide-react';
+import { Loader2, Home, BookOpen, Video, MessageSquare, Settings, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import DashboardNav from '@/components/DashboardNav';
 import Footer from '@/components/footer';
@@ -58,6 +58,7 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
     { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
     { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/live-classes' },
+    { id: 'study-rooms', label: 'Study Rooms', icon: Users, href: '/dashboard/study-rooms' },
     { id: 'community', label: 'Community', icon: MessageSquare, href: '/dashboard/community' },
     { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
   ];
@@ -85,7 +86,7 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
                     'flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium transition-colors',
-                    pathname === item.href
+                    pathname.startsWith(item.href)
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     )}

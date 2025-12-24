@@ -29,6 +29,7 @@ const studentNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
   { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
   { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/live-classes' },
+  { id: 'study-rooms', label: 'Study Rooms', icon: Users, href: '/dashboard/study-rooms' },
   { id: 'community', label: 'Community', icon: MessageSquare, href: '/dashboard/community' },
   { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
 ];
@@ -89,7 +90,7 @@ const DashboardNav: React.FC = () => {
                         href={item.href}
                         className={cn(
                         'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-medium transition-colors',
-                        pathname === item.href
+                        pathname.startsWith(item.href)
                             ? 'border-primary text-primary'
                             : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                         )}
