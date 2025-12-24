@@ -1,14 +1,8 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useRole } from '@/contexts/RoleContext';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import AccessibilityBanner from '@/components/AccessibilityBanner';
-import StudentDashboard from '@/components/dashboards/StudentDashboard';
-import TeacherDashboard from '@/components/dashboards/TeacherDashboard';
-import SponsorDashboard from '@/components/dashboards/SponsorDashboard';
-import AdminDashboard from '@/components/dashboards/AdminDashboard';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
 import { Loader2 } from 'lucide-react';
@@ -77,7 +71,7 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
         onDarkModeToggle={() => setDarkMode(!darkMode)}
       />
 
-      <div className={cn("fixed top-16 z-30 w-full", 
+      <div className={cn("fixed top-16 z-30 w-full transition-all duration-300", 
         !sidebarCollapsed ? 'lg:pl-64' : 'lg:pl-16'
       )}>
         <AccessibilityBanner />
@@ -124,28 +118,4 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
   );
 };
 
-const DashboardPage: React.FC = () => {
-    const { currentRole } = useRole();
-  
-    const renderDashboard = () => {
-      switch (currentRole) {
-        case 'teacher':
-          return <TeacherDashboard />;
-        case 'sponsor':
-          return <SponsorDashboard />;
-        case 'admin':
-          return <AdminDashboard />;
-        default:
-          return <StudentDashboard />;
-      }
-    };
-  
-    return (
-      <DashboardLayout>
-        {renderDashboard()}
-      </DashboardLayout>
-    );
-  };
-  
-  export default DashboardPage;
-  
+export default DashboardLayout;

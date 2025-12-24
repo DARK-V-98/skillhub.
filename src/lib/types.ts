@@ -1,11 +1,14 @@
+'use client';
 export type UserRole = 'student' | 'teacher' | 'sponsor' | 'admin';
 
-export interface User {
+export interface UserProfile {
   id: string;
   name: string;
   email: string;
   avatar: string;
   role: UserRole;
+  postCount?: number;
+  commentCount?: number;
 }
 
 export interface Course {
@@ -56,7 +59,7 @@ export interface Scholarship {
 }
 
 export interface Notification {
-  id: string;
+  id:string;
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'class';
@@ -74,3 +77,38 @@ export interface AccessibilitySettings {
   textToSpeech: boolean;
   colorBlindFilter: 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia';
 }
+
+export interface CommunityPost {
+    id: string;
+    title: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    authorAvatar: string;
+    createdAt: string; // ISO 8601 date string
+    upvotes: number;
+    downvotes: number;
+    commentCount: number;
+    userVote?: 'up' | 'down';
+  }
+  
+  export interface CommunityComment {
+    id: string;
+    postId: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    authorAvatar: string;
+    createdAt: string; // ISO 8601 date string
+    upvotes: number;
+    downvotes: number;
+    userVote?: 'up' | 'down';
+  }
+  
+  export interface CommunityVote {
+    id: string;
+    userId: string;
+    refId: string; // postId or commentId
+    refType: 'post' | 'comment';
+    direction: 'up' | 'down';
+  }

@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function getRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+
+    function isRole(userId, role) {
+      return getRole(userId) == role;
+    }
+
+    match /users/{userId} {
+      allow read;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+    }
+    
+    match /courses/{courseId} {
+      allow read;
+      allow create, update, delete: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));
+    }
+
+    match /liveClasses/{classId} {
+        allow read;
+        allow create, update, delete: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));
+    }
+
+    match /users/{userId}/achievements/{achievementId} {
+        allow read: if isSignedIn() && isOwner(userId);
+        allow write: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));
+    }
+
+    match /communityPosts/{postId} {
+      allow read;
+      allow create: if isSignedIn();
+      allow update(diff(resource.data, request.resource.data).affectedKeys()
+                   .hasOnly(['upvotes', 'downvotes', 'commentCount', 'title', 'content']));
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isRole(request.auth.uid, 'admin'));
+    }
+
+    match /communityPosts/{postId}/comments/{commentId} {
+      allow read;
+      allow create: if isSignedIn();
+      allow update(diff(resource.data, request.resource.data).affectedKeys()
+                   .hasOnly(['upvotes', 'downvotes', 'content']));
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isRole(request.auth.uid, 'admin'));
+    }
+
+    match /votes/{voteId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

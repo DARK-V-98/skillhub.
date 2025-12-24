@@ -1,0 +1,145 @@
+{
+    "entities": {
+        "userProfile": {
+            "title": "User Profile",
+            "description": "Represents a user's profile in the system.",
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "avatar": { "type": "string", "format": "uri" },
+                "role": { "type": "string", "enum": ["student", "teacher", "sponsor", "admin"] },
+                "postCount": { "type": "number" },
+                "commentCount": { "type": "number" }
+            },
+            "required": ["name", "email", "role"]
+        },
+        "course": {
+            "title": "Course",
+            "description": "Represents an educational course.",
+            "type": "object",
+            "properties": {
+                "title": { "type": "string" },
+                "instructor": { "type": "string" },
+                "instructorAvatar": { "type": "string", "format": "uri" },
+                "thumbnail": { "type": "string", "format": "uri" },
+                "rating": { "type": "number" },
+                "students": { "type": "number" },
+                "progress": { "type": "number" },
+                "price": { "type": "number" },
+                "duration": { "type": "string" },
+                "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"] },
+                "category": { "type": "string" },
+                "description": { "type": "string" },
+                "lessonsCount": { "type": "number" }
+            },
+            "required": ["title", "instructor", "thumbnail", "price", "level"]
+        },
+        "liveClass": {
+            "title": "Live Class",
+            "description": "Represents a live, scheduled class session.",
+            "type": "object",
+            "properties": {
+                "title": { "type": "string" },
+                "instructor": { "type": "string" },
+                "course": { "type": "string" },
+                "startTime": { "type": "string", "format": "date-time" },
+                "duration": { "type": "number" },
+                "attendees": { "type": "number" },
+                "isLive": { "type": "boolean" }
+            },
+            "required": ["title", "instructor", "startTime", "duration"]
+        },
+        "achievement": {
+            "title": "Achievement",
+            "description": "Represents a badge or certificate earned by a user.",
+            "type": "object",
+            "properties": {
+                "title": { "type": "string" },
+                "description": { "type": "string" },
+                "icon": { "type": "string" },
+                "earnedAt": { "type": "string", "format": "date-time" },
+                "type": { "type": "string", "enum": ["badge", "certificate"] }
+            },
+            "required": ["title", "earnedAt", "type"]
+        },
+        "communityPost": {
+            "title": "Community Post",
+            "description": "A post in the community forum.",
+            "type": "object",
+            "properties": {
+                "title": { "type": "string" },
+                "content": { "type": "string" },
+                "authorId": { "type": "string" },
+                "authorName": { "type": "string" },
+                "authorAvatar": { "type": "string", "format": "uri" },
+                "createdAt": { "type": "string", "format": "date-time" },
+                "upvotes": { "type": "number" },
+                "downvotes": { "type": "number" },
+                "commentCount": { "type": "number" }
+            },
+            "required": ["title", "content", "authorId", "createdAt"]
+        },
+        "communityComment": {
+            "title": "Community Comment",
+            "description": "A comment on a community post.",
+            "type": "object",
+            "properties": {
+                "postId": { "type": "string" },
+                "content": { "type": "string" },
+                "authorId": { "type": "string" },
+                "authorName": { "type": "string" },
+                "authorAvatar": { "type": "string", "format": "uri" },
+                "createdAt": { "type": "string", "format": "date-time" },
+                "upvotes": { "type": "number" },
+                "downvotes": { "type": "number" }
+            },
+            "required": ["postId", "content", "authorId", "createdAt"]
+        },
+        "communityVote": {
+            "title": "Community Vote",
+            "description": "Represents a user's vote on a post or comment.",
+            "type": "object",
+            "properties": {
+                "userId": { "type": "string" },
+                "refId": { "type": "string" },
+                "refType": { "type": "string", "enum": ["post", "comment"] },
+                "direction": { "type": "string", "enum": ["up", "down"] }
+            },
+            "required": ["userId", "refId", "refType", "direction"]
+        }
+    },
+    "auth": {
+        "providers": ["google.com", "password"]
+    },
+    "firestore": {
+        "/users/{userId}": {
+            "schema": { "$ref": "#/entities/userProfile" },
+            "description": "Stores public profile information for each user."
+        },
+        "/courses": {
+            "schema": { "$ref": "#/entities/course" },
+            "description": "Collection of all available courses."
+        },
+        "/liveClasses": {
+            "schema": { "$ref": "#/entities/liveClass" },
+            "description": "Collection of all live classes."
+        },
+        "/users/{userId}/achievements": {
+            "schema": { "$ref": "#/entities/achievement" },
+            "description": "Sub-collection of achievements for a specific user."
+        },
+        "/communityPosts": {
+            "schema": { "$ref": "#/entities/communityPost" },
+            "description": "Top-level collection for all community forum posts."
+        },
+        "/communityPosts/{postId}/comments": {
+            "schema": { "$ref": "#/entities/communityComment" },
+            "description": "Sub-collection of comments for a specific community post."
+        },
+        "/votes": {
+            "schema": { "$ref": "#/entities/communityVote" },
+            "description": "Top-level collection for all votes to ensure atomic operations and easier querying."
+        }
+    }
+}

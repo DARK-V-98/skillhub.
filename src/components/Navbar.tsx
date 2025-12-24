@@ -39,7 +39,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 interface NavbarProps {
-  onMenuToggle: () => void;
   isMobileSidebarOpen: boolean;
   onMobileMenuToggle: () => void;
   darkMode: boolean;
@@ -60,7 +59,7 @@ const roleColors: Record<UserRole, string> = {
   admin: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
-const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, onMobileMenuToggle, darkMode, onDarkModeToggle }) => {
+const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkModeToggle }) => {
   const { currentRole, setCurrentRole } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useUser();
@@ -217,13 +216,13 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, onMobileMenuToggle, darkM
                         className="btn-touch-target flex items-center gap-2 px-2"
                         aria-label="User menu"
                     >
-                        {user.photoURL && <Image
+                        {user.photoURL ? <Image
                           src={user.photoURL}
                           alt={user.displayName || 'User Avatar'}
                           width={32}
                           height={32}
                           className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20"
-                        />}
+                        /> : <User className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20 p-1"/>}
                         <span className="hidden lg:block font-medium">{user.displayName}</span>
                         <ChevronDown className="h-4 w-4 hidden lg:block" />
                     </Button>
