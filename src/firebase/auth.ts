@@ -47,6 +47,17 @@ export const signUpWithEmailAndPassword = async (email: string, password: string
 export const signInWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
     const auth = getAuth(app);
     const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Ensure user data is in Firestore
+    const firestore = getFirestore(app);
+    const userRef = doc(firestore, 'users', user.uid);
+    await setDoc(userRef, {
+        name: user.displayName || user.email?.split('@')[0],
+        email: user.email,
+        avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+    }, { merge: true });
+
     return userCredential.user;
 };
 
