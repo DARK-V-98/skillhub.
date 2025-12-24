@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { useRole } from '@/contexts/RoleContext';
@@ -14,44 +15,48 @@ import { Loader2 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
     const { currentRole, setCurrentRole } = useRole();
-    const { user } = useUser();
+    const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
   
     const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
-    const { data: userProfile, loading: userProfileLoading } = useDoc<UserProfile>(userProfileRef);
+    const { data: userProfile, loading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
     React.useEffect(() => {
-        if(userProfile?.role) {
+        if (userProfile?.role) {
             setCurrentRole(userProfile.role);
         }
-    },[userProfile, setCurrentRole]);
+    }, [userProfile, setCurrentRole]);
 
     const renderDashboard = () => {
+      // Determine which role to render. If the stored role is 'developer', use the one from context, otherwise use the stored one.
       const roleToRender = userProfile?.role === 'developer' ? currentRole : userProfile?.role;
     
-      if (!userProfile) return null;
-
       switch (roleToRender) {
-        case 'student':
-          return <StudentDashboard />;
         case 'teacher':
           return <TeacherDashboard />;
         case 'sponsor':
           return <SponsorDashboard />;
         case 'admin':
           return <AdminDashboard />;
-        case 'developer':
+        case 'student':
         default:
           return <StudentDashboard />;
       }
     };
   
-    if(userProfileLoading){
-      return(
+    // Show a loading spinner while user or profile data is being fetched.
+    if (userLoading || profileLoading) {
+      return (
         <div className="flex items-center justify-center h-[calc(100vh-20rem)]">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      )
+      );
+    }
+
+    // If there is no user, we can show an empty state or redirect, but for now we'll just show nothing
+    // as the layout should handle the redirect.
+    if (!user) {
+        return null;
     }
 
     return (
