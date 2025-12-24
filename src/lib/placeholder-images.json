@@ -5,6 +5,12 @@
       "description": "Abstract shapes and colors representing creativity and technology",
       "imageUrl": "https://images.unsplash.com/photo-1557264337-e8a93017fe92?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhYnN0cmFjdCUyMHRlY2h8ZW58MHx8fHwxNzY2NTEwMTg5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "abstract tech"
+    },
+    {
+      "id": "login-bg",
+      "description": "Green ocean water texture",
+      "imageUrl": "https://images.unsplash.com/photo-1517384084767-6bc118943770?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxvY2VhbiUyMHdhdGVyfGVufDB8fHx8MTc2NjU2NzE5NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ocean water"
     }
   ]
 }

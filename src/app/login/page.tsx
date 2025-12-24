@@ -1,6 +1,5 @@
-
 'use client';
-import { AuthCard } from '@/components/AuthCard';
+import { AuthForm } from '@/components/AuthForm';
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -25,8 +24,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
-      <AuthCard />
+    <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
+      <AuthForm />
     </div>
   );
 }
