@@ -1,6 +1,6 @@
-'use client';
 import React, { useState, useEffect } from 'react';
-import { useRole } from '@/contexts/RoleContext';
+import { RoleProvider, useRole } from '@/contexts/RoleContext';
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import AccessibilityPanel from '@/components/AccessibilityPanel';
@@ -10,16 +10,12 @@ import TeacherDashboard from '@/components/dashboards/TeacherDashboard';
 import SponsorDashboard from '@/components/dashboards/SponsorDashboard';
 import AdminDashboard from '@/components/dashboards/AdminDashboard';
 import { cn } from '@/lib/utils';
-import { useUser, signInWithGoogle } from '@/firebase/auth';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
 
 const DashboardContent: React.FC = () => {
   const { currentRole } = useRole();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(false);
-  const { user, loading } = useUser();
 
   useEffect(() => {
     if (darkMode) {
@@ -30,28 +26,6 @@ const DashboardContent: React.FC = () => {
   }, [darkMode]);
 
   const renderDashboard = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      );
-    }
-    if (!user) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-150px)] text-center">
-                <h1 className="text-4xl font-bold mb-4 text-gradient">Welcome to SkillHub</h1>
-                <p className="mb-8 text-lg text-muted-foreground">Your journey to mastery starts here. Please sign in to continue.</p>
-                <Button
-                    onClick={signInWithGoogle}
-                    size="lg"
-                >
-                    Sign in with Google
-                </Button>
-            </div>
-        );
-    }
-    
     switch (currentRole) {
       case 'teacher':
         return <TeacherDashboard />;
@@ -66,7 +40,7 @@ const DashboardContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 top-4 left-4 bg-background p-2 rounded-md">
+      <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
       
@@ -78,21 +52,20 @@ const DashboardContent: React.FC = () => {
         onDarkModeToggle={() => setDarkMode(!darkMode)}
       />
       
-      {user && (
-        <Sidebar
-            collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-            activePage={activePage}
-            onNavigate={setActivePage}
-        />
-      )}
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        activePage={activePage}
+        onNavigate={setActivePage}
+      />
       
       <main
         id="main-content"
         className={cn(
-          'pt-28 min-h-screen transition-all duration-300',
-          user && !sidebarCollapsed ? 'lg:pl-64' : (user ? 'lg:pl-16' : '')
+          'pt-16 min-h-screen transition-all duration-300',
+          sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
         )}
+        style={{ marginTop: '48px' }}
       >
         <div className="p-4 lg:p-8">
           {renderDashboard()}
@@ -104,10 +77,14 @@ const DashboardContent: React.FC = () => {
   );
 };
 
-const Home: React.FC = () => {
+const Index: React.FC = () => {
   return (
-    <DashboardContent />
+    <AccessibilityProvider>
+      <RoleProvider>
+        <DashboardContent />
+      </RoleProvider>
+    </AccessibilityProvider>
   );
 };
 
-export default Home;
+export default Index;

@@ -1,12 +1,17 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
+import { Inter, Open_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import Header from '@/components/header';
-import Footer from '@/components/footer';
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
+import { RoleProvider } from '@/contexts/RoleContext';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const openSans = Open_Sans({ subsets: ['latin'], variable: '--font-dyslexic' });
 
 export const metadata: Metadata = {
-  title: 'Simple Site',
-  description: 'A simple website with content display and a contact form.',
+  title: 'SkillHub',
+  description: 'Your hub for online learning',
 };
 
 export default function RootLayout({
@@ -15,17 +20,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <Toaster />
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${openSans.variable} font-sans`}>
+        <FirebaseClientProvider>
+          <AccessibilityProvider>
+            <RoleProvider>
+              {children}
+              <Toaster />
+            </RoleProvider>
+          </AccessibilityProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
