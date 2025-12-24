@@ -1,5 +1,5 @@
 'use client';
-export type UserRole = 'student' | 'teacher' | 'sponsor' | 'admin';
+export type UserRole = 'student' | 'teacher' | 'sponsor' | 'admin' | 'developer';
 
 export interface UserProfile {
   id: string;
@@ -112,3 +112,4 @@ export interface CommunityPost {
     refType: 'post' | 'comment';
     direction: 'up' | 'down';
   }
+

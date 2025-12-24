@@ -13,6 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
+import { useFirestore } from '@/firebase/provider';
+import { doc, setDoc } from 'firebase/firestore';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -40,6 +42,7 @@ export const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const firestore = useFirestore();
 
   const loginImage = PlaceHolderImages.find(p => p.id === 'login-bg');
 
@@ -58,7 +61,7 @@ export const AuthForm = () => {
 
     if (error instanceof FirebaseError) {
       description = error.message.replace('Firebase: ', '');
-      if (error.code === 'auth/invalid-credential') {
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
         description = 'Invalid email or password. Please try again.';
       }
     }
@@ -111,7 +114,16 @@ export const AuthForm = () => {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
+      const user = await signInWithGoogle();
+      if (user && firestore) {
+        const userRef = doc(firestore, 'users', user.uid);
+        await setDoc(userRef, {
+            name: user.displayName,
+            email: user.email,
+            avatar: user.photoURL,
+            role: 'student' // Default role
+        }, { merge: true });
+      }
       handleAuthSuccess();
     } catch (error) {
       handleAuthError(error);

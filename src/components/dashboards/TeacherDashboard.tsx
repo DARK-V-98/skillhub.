@@ -13,7 +13,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
-import { teacherStats, courses } from '@/lib/mockData';
+import { teacherStats } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -26,9 +26,27 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import Image from 'next/image';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, query } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/provider';
+import { Course } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 const TeacherDashboard: React.FC = () => {
-  const myCourses = courses.slice(0, 4);
+    const firestore = useFirestore();
+
+    const { data: myCourses, loading: coursesLoading } = useCollection<Course>(
+        firestore ? query(collection(firestore, 'courses')) : null
+    );
+
+    if (coursesLoading) {
+        return (
+          <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        );
+    }
+
 
   return (
     <div className="space-y-8">
@@ -72,9 +90,8 @@ const TeacherDashboard: React.FC = () => {
         />
         <StatCard
           title="Active Courses"
-          value={teacherStats.activeCourses}
+          value={myCourses?.length || 0}
           icon={BookOpen}
-          change={{ value: 1, positive: true }}
         />
       </div>
 
@@ -179,7 +196,7 @@ const TeacherDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid gap-4">
-          {myCourses.map((course) => (
+          {myCourses?.map((course) => (
             <Card key={course.id} className="card-hover">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row items-center gap-4">

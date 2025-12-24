@@ -6,20 +6,20 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut as firebaseSignOut,
-  createUserWithEmailAndPassword,
+  createUserWithEmailAndPassword as firebaseCreateUserWithEmailAndPassword,
   signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
   sendPasswordResetEmail,
   type User,
 } from 'firebase/auth';
 import { app } from './config';
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useFirebase } from './provider';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (): Promise<User> => {
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
   try {
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
   } catch (error) {
     console.error("Error signing in with Google: ", error);
     throw error;
@@ -28,8 +28,20 @@ export const signInWithGoogle = async () => {
 
 export const signUpWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
     const auth = getAuth(app);
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
+    const userCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Save user to Firestore
+    const firestore = getFirestore(app);
+    const userRef = doc(firestore, 'users', user.uid);
+    await setDoc(userRef, {
+        name: user.email?.split('@')[0] || 'New User',
+        email: user.email,
+        avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+        role: 'student'
+    }, { merge: true });
+
+    return user;
 };
 
 export const signInWithEmailAndPassword = async (email: string, password: string): Promise<User> => {

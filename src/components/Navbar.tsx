@@ -50,6 +50,7 @@ const roleLabels: Record<UserRole, string> = {
   teacher: 'Teacher',
   sponsor: 'Sponsor',
   admin: 'Admin',
+  developer: 'Developer',
 };
 
 const roleColors: Record<UserRole, string> = {
@@ -57,6 +58,7 @@ const roleColors: Record<UserRole, string> = {
   teacher: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   sponsor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   admin: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  developer: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
 };
 
 const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkModeToggle }) => {
