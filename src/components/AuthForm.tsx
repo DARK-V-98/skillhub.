@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { signInWithGoogle, signUpWithEmailAndPassword, signInWithEmailAndPassword } from '@/firebase/auth';
+import { signInWithGoogle, signUpWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordReset } from '@/firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { FirebaseError } from 'firebase/app';
 import Logo from './Logo';
@@ -33,7 +33,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export const AuthForm = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [view, setView] = useState<'signIn' | 'signUp' | 'forgotPassword'>('signIn');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -50,7 +50,10 @@ export const AuthForm = () => {
 
   const handleAuthError = (error: any) => {
     setIsLoading(false);
-    let title = isSignUp ? 'Sign Up Error' : 'Sign In Error';
+    let title = 'Authentication Error';
+    if(view === 'signUp') title = 'Sign Up Error';
+    if(view === 'signIn') title = 'Sign In Error';
+
     let description = 'An unknown error occurred. Please try again.';
 
     if (error instanceof FirebaseError) {
@@ -58,14 +61,7 @@ export const AuthForm = () => {
       if (error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password. Please try again.';
       }
-    } else if (error.code) { // Handle cases where error might be a plain object with a code
-        if (error.code === 'auth/invalid-credential') {
-            description = 'Invalid email or password. Please try again.';
-        } else {
-            description = error.message || description;
-        }
     }
-
 
     toast({
       variant: 'destructive',
@@ -78,8 +74,24 @@ export const AuthForm = () => {
     e.preventDefault();
     setIsLoading(true);
 
+    if (view === 'forgotPassword') {
+        try {
+            await sendPasswordReset(email);
+            toast({
+                title: 'Password Reset Email Sent',
+                description: 'Please check your inbox to reset your password.'
+            });
+            setView('signIn');
+        } catch (error) {
+            handleAuthError(error);
+        } finally {
+            setIsLoading(false);
+        }
+        return;
+    }
+
     try {
-      if (isSignUp) {
+      if (view === 'signUp') {
         if (password !== confirmPassword) {
           toast({ variant: 'destructive', title: 'Sign Up Error', description: 'Passwords do not match.' });
           setIsLoading(false);
@@ -108,10 +120,95 @@ export const AuthForm = () => {
     }
   };
 
-  const formTitle = isSignUp ? 'Create an Account' : 'Login to SkillHub';
-  const formDescription = isSignUp ? 'Already have an account?' : "Don't have an account?";
-  const linkText = isSignUp ? 'Login now' : 'Create one now';
-  const buttonText = isSignUp ? 'Create Account' : 'Login';
+  const renderFormContent = () => {
+      if (view === 'forgotPassword') {
+          return (
+              <>
+                <h2 className="text-2xl font-bold mb-1">Reset Password</h2>
+                <p className="text-muted-foreground text-sm mb-6">
+                    Enter your email to receive a password reset link. Or{' '}
+                    <button onClick={() => setView('signIn')} className="font-semibold text-primary hover:underline" disabled={isLoading}>
+                    return to login.
+                    </button>
+                </p>
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+                    </div>
+                    <Button className="w-full" type="submit" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {isLoading ? 'Sending...' : 'Send Reset Link'}
+                    </Button>
+                </form>
+              </>
+          )
+      }
+
+      const isSignUp = view === 'signUp';
+      const formTitle = isSignUp ? 'Create an Account' : 'Login to SkillHub';
+      const formDescription = isSignUp ? 'Already have an account?' : "Don't have an account?";
+      const linkText = isSignUp ? 'Login now' : 'Create one now';
+      const buttonText = isSignUp ? 'Create Account' : 'Login';
+
+      return (
+        <>
+            <h2 className="text-2xl font-bold mb-1">{formTitle}</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+                {formDescription}{' '}
+                <button onClick={() => setView(isSignUp ? 'signIn' : 'signUp')} className="font-semibold text-primary hover:underline" disabled={isLoading}>
+                    {linkText}
+                </button>
+            </p>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
+                </div>
+                {isSignUp && (
+                    <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isLoading} />
+                    </div>
+                )}
+                {!isSignUp && (
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="remember-me" disabled={isLoading} />
+                            <Label htmlFor="remember-me" className="text-sm font-normal">Remember me</Label>
+                        </div>
+                        <button type="button" onClick={() => setView('forgotPassword')} className="text-sm text-primary hover:underline" disabled={isLoading}>
+                            Forgot password?
+                        </button>
+                    </div>
+                )}
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" type="submit" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isLoading ? 'Processing...' : buttonText}
+                </Button>
+            </form>
+
+            <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">OR</span>
+            </div>
+            </div>
+
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
+            Sign in with Google
+            </Button>
+        </>
+      )
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-card text-card-foreground rounded-2xl shadow-2xl overflow-hidden grid md:grid-cols-2">
@@ -143,57 +240,7 @@ export const AuthForm = () => {
         </div>
       </div>
       <div className="p-8 md:p-12 flex flex-col justify-center">
-        <h2 className="text-2xl font-bold mb-1">{formTitle}</h2>
-        <p className="text-muted-foreground text-sm mb-6">
-          {formDescription}{' '}
-          <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-primary hover:underline" disabled={isLoading}>
-            {linkText}
-          </button>
-        </p>
-
-        <form onSubmit={handleFormSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
-          </div>
-          {isSignUp && (
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isLoading} />
-            </div>
-          )}
-          {!isSignUp && (
-              <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                      <Checkbox id="remember-me" disabled={isLoading} />
-                      <Label htmlFor="remember-me" className="text-sm font-normal">Remember me</Label>
-                  </div>
-                  <Link href="#" className="text-sm text-primary hover:underline">Forgot password?</Link>
-              </div>
-          )}
-          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" type="submit" disabled={isLoading}>
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isLoading ? 'Processing...' : buttonText}
-          </Button>
-        </form>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">OR</span>
-          </div>
-        </div>
-
-        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
-           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
-          Sign in with Google
-        </Button>
+        {renderFormContent()}
       </div>
     </div>
   );

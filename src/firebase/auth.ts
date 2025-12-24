@@ -8,6 +8,7 @@ import {
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
+  sendPasswordResetEmail,
   type User,
 } from 'firebase/auth';
 import { app } from './config';
@@ -45,4 +46,9 @@ export const signOut = async () => {
   } catch (error) {
     console.error("Error signing out: ", error);
   }
+};
+
+export const sendPasswordReset = async (email: string): Promise<void> => {
+    const auth = getAuth(app);
+    await sendPasswordResetEmail(auth, email);
 };
