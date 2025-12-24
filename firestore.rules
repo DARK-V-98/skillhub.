@@ -39,6 +39,10 @@ service cloud.firestore {
     match /liveClasses/{classId}/messages/{messageId} {
         allow read, create: if isSignedIn();
     }
+    
+    match /liveClasses/{classId}/calls/{callId} {
+      allow read, write: if isSignedIn();
+    }
 
     match /users/{userId}/achievements/{achievementId} {
         allow read: if isSignedIn() && isOwner(userId);
@@ -72,6 +76,10 @@ service cloud.firestore {
     
     match /studyRooms/{roomId}/messages/{messageId} {
         allow read, create: if isSignedIn();
+    }
+
+    match /studyRooms/{roomId}/whiteboard/{docId} {
+      allow read, write: if isSignedIn();
     }
 
     match /studyRooms/{roomId}/calls/{callId} {

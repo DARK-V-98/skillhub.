@@ -17,13 +17,16 @@ import {
   increment
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Whiteboard from './Whiteboard';
+
 
 interface StudyRoomClientProps {
   studyRoom: StudyRoom;
@@ -252,24 +255,33 @@ const StudyRoomClient: React.FC<StudyRoomClientProps> = ({ studyRoom }) => {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-black rounded-lg overflow-hidden relative">
-      <div className="flex-1 flex flex-col relative">
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2 p-2 relative">
-             <div className="relative bg-gray-900 rounded-md overflow-hidden">
-                <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
-             </div>
+       <div className="flex-1 flex flex-col relative">
+          <Tabs defaultValue="video" className="w-full h-full flex flex-col">
+              <div className="absolute top-4 left-4 z-10 bg-black/50 rounded-lg p-1">
+                  <TabsList>
+                      <TabsTrigger value="video"><Users className="h-4 w-4 mr-2" />Participants</TabsTrigger>
+                      <TabsTrigger value="whiteboard"><Edit className="h-4 w-4 mr-2" />Whiteboard</TabsTrigger>
+                  </TabsList>
+              </div>
 
-             {remoteStreams.map((stream, index) => (
-                <div key={index} className="relative bg-gray-900 rounded-md overflow-hidden">
-                    <video ref={el => { if (el) el.srcObject = stream; }} autoPlay playsInline className="w-full h-full object-cover" />
-                    <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">Participant {index+1}</div>
+              <TabsContent value="video" className="flex-1 overflow-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 h-full">
+                    <div className="relative bg-gray-900 rounded-md overflow-hidden">
+                        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
+                    </div>
+                    {remoteStreams.map((stream, index) => (
+                        <div key={index} className="relative bg-gray-900 rounded-md overflow-hidden">
+                            <video ref={el => { if (el) el.srcObject = stream; }} autoPlay playsInline className="w-full h-full object-cover" />
+                            <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">Participant {index+1}</div>
+                        </div>
+                    ))}
                 </div>
-             ))}
-
-            <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1.5 rounded-lg text-sm">
-                {studyRoom.name}
-            </div>
-        </div>
+              </TabsContent>
+              <TabsContent value="whiteboard" className="flex-1 bg-gray-800 h-full">
+                {firestore && <Whiteboard roomId={studyRoom.id} firestore={firestore} />}
+              </TabsContent>
+          </Tabs>
       </div>
 
       <div className={cn("bg-gray-900/80 backdrop-blur-sm transition-all duration-300 overflow-hidden flex flex-col", isChatOpen ? "w-80" : "w-0")}>
