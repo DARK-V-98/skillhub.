@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState } from 'react';
 import { 
@@ -32,7 +33,8 @@ import { useRole } from '@/contexts/RoleContext';
 import { UserRole } from '@/lib/types';
 import { notifications } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
-import { useUser, signOut, signInWithGoogle } from '@/firebase/auth';
+import { useUser } from '@/firebase/auth/use-user';
+import { signOut } from '@/firebase/auth';
 import Image from 'next/image';
 
 interface NavbarProps {

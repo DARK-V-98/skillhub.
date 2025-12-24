@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { 
@@ -15,7 +16,7 @@ import LiveClassCard from '@/components/LiveClassCard';
 import AchievementCard from '@/components/AchievementCard';
 import { courses, liveClasses, achievements } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
-import { useUser } from '@/firebase/auth';
+import { useUser } from '@/firebase/auth/use-user';
 
 const StudentDashboard: React.FC = () => {
   const { user } = useUser();

@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { 
@@ -24,7 +25,7 @@ import {
 import { useRole } from '@/contexts/RoleContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useUser } from '@/firebase/auth';
+import { useUser } from '@/firebase/auth/use-user';
 
 interface SidebarProps {
   collapsed: boolean;

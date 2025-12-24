@@ -1,7 +1,7 @@
-// This file is intentionally blank. It is used to provide a client-side entry point for the Firebase provider.
+
 "use client";
 
-import { AuthProvider } from "./auth";
+import { useUser } from "./auth/use-user";
 import { FirebaseProvider } from "./provider";
 
 export function FirebaseClientProvider({
@@ -11,9 +11,7 @@ export function FirebaseClientProvider({
 }) {
   return (
     <FirebaseProvider>
-        <AuthProvider>
-            {children}
-        </AuthProvider>
+        {children}
     </FirebaseProvider>
   );
 }
