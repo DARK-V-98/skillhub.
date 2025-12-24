@@ -17,17 +17,17 @@ import AchievementCard from '@/components/AchievementCard';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase/auth/use-user';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { collection, query, where, limit, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { Course, LiveClass, Achievement } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 const StudentDashboard: React.FC = () => {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
 
-  const enrolledCoursesQuery = firestore ? query(collection(firestore, 'courses'), where('students', 'array-contains', user?.uid), limit(3)) : null;
+  const enrolledCoursesQuery = firestore && user?.uid ? query(collection(firestore, 'courses'), where('students', 'array-contains', user.uid), limit(3)) : null;
   const { data: enrolledCourses, loading: enrolledCoursesLoading } = useCollection<Course>(enrolledCoursesQuery);
 
   const recommendedCoursesQuery = firestore ? query(collection(firestore, 'courses'), limit(4)) : null;
@@ -43,7 +43,7 @@ const StudentDashboard: React.FC = () => {
   const upcomingClasses = liveClasses?.filter(c => new Date(c.startTime) > new Date()).slice(0, 2) || [];
   const liveNow = liveClasses?.filter(c => new Date(c.startTime) <= new Date() && new Date(c.startTime).getTime() + c.duration * 60000 > Date.now()) || [];
 
-  const isLoading = enrolledCoursesLoading || recommendedCoursesLoading || liveClassesLoading || achievementsLoading;
+  const isLoading = userLoading || enrolledCoursesLoading || recommendedCoursesLoading || liveClassesLoading || achievementsLoading;
 
   const totalEnrolled = enrolledCourses?.length || 0;
   const totalAchievements = achievements?.length || 0;
