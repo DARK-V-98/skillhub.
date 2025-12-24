@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FirebaseError } from 'firebase/app';
 import Logo from './Logo';
 import Image from 'next/image';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -37,35 +37,66 @@ export const AuthForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
   const loginImage = PlaceHolderImages.find(p => p.id === 'login-bg');
 
+  const handleAuthSuccess = () => {
+    toast({ title: 'Success', description: 'Redirecting to your dashboard...' });
+    router.push('/dashboard');
+  };
+
+  const handleAuthError = (error: any) => {
+    if (error instanceof FirebaseError) {
+      toast({
+        variant: 'destructive',
+        title: isSignUp ? 'Sign Up Error' : 'Sign In Error',
+        description: error.message.replace('Firebase: ', ''),
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'An unknown error occurred',
+        description: 'Please try again.',
+      });
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
     try {
       if (isSignUp) {
         if (password !== confirmPassword) {
           toast({ variant: 'destructive', title: 'Sign Up Error', description: 'Passwords do not match.' });
+          setIsLoading(false);
           return;
         }
         await signUpWithEmailAndPassword(email, password);
-        toast({ title: 'Success', description: 'Account created successfully! Redirecting...' });
-        router.push('/dashboard');
+        handleAuthSuccess();
       } else {
         await signInWithEmailAndPassword(email, password);
-        toast({ title: 'Success', description: 'Signed in successfully! Redirecting...' });
-        router.push('/dashboard');
+        handleAuthSuccess();
       }
     } catch (error) {
-      if (error instanceof FirebaseError) {
-        toast({
-          variant: 'destructive',
-          title: isSignUp ? 'Sign Up Error' : 'Sign In Error',
-          description: error.message,
-        });
-      }
+      handleAuthError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      handleAuthSuccess();
+    } catch (error) {
+      handleAuthError(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -107,7 +138,7 @@ export const AuthForm = () => {
         <h2 className="text-2xl font-bold mb-1">{formTitle}</h2>
         <p className="text-muted-foreground text-sm mb-6">
           {formDescription}{' '}
-          <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-primary hover:underline">
+          <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-primary hover:underline" disabled={isLoading}>
             {linkText}
           </button>
         </p>
@@ -115,29 +146,30 @@ export const AuthForm = () => {
         <form onSubmit={handleFormSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
           </div>
           {isSignUp && (
             <div className="space-y-2">
               <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isLoading} />
             </div>
           )}
           {!isSignUp && (
               <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                      <Checkbox id="remember-me" />
+                      <Checkbox id="remember-me" disabled={isLoading} />
                       <Label htmlFor="remember-me" className="text-sm font-normal">Remember me</Label>
                   </div>
                   <Link href="#" className="text-sm text-primary hover:underline">Forgot password?</Link>
               </div>
           )}
-          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" type="submit">
-            {buttonText}
+          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" type="submit" disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isLoading ? 'Processing...' : buttonText}
           </Button>
         </form>
 
@@ -150,8 +182,8 @@ export const AuthForm = () => {
           </div>
         </div>
 
-        <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
-          <GoogleIcon className="mr-2 h-4 w-4" />
+        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
+           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
           Sign in with Google
         </Button>
       </div>
