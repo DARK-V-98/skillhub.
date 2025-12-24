@@ -19,6 +19,11 @@ service cloud.firestore {
     function isRole(userId, role) {
       return getRole(userId) == role;
     }
+    
+    function isOneOfRoles(userId, roles) {
+      let userRole = getRole(userId);
+      return userRole in roles;
+    }
 
     match /users/{userId} {
       allow read;
@@ -28,12 +33,12 @@ service cloud.firestore {
     
     match /courses/{courseId} {
       allow read;
-      allow create, update, delete: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));
+      allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
     }
 
     match /liveClasses/{classId} {
         allow read;
-        allow create, update, delete: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));
+        allow create, update, delete: if isSignedIn() && isOneOf-Roles(request.auth.uid, ['admin', 'teacher', 'developer']);
     }
 
     match /liveClasses/{classId}/messages/{messageId} {
@@ -46,7 +51,7 @@ service cloud.firestore {
 
     match /users/{userId}/achievements/{achievementId} {
         allow read: if isSignedIn() && isOwner(userId);
-        allow write: if isSignedIn() && (isRole(request.auth.uid, 'admin') || isRole(request.auth.uid, 'teacher'));
+        allow write: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
     }
 
     match /communityPosts/{postId} {
@@ -54,7 +59,7 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update(diff(resource.data, request.resource.data).affectedKeys()
                    .hasOnly(['upvotes', 'downvotes', 'commentCount', 'title', 'content']));
-      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isRole(request.auth.uid, 'admin'));
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']));
     }
 
     match /communityPosts/{postId}/comments/{commentId} {
@@ -62,7 +67,7 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update(diff(resource.data, request.resource.data).affectedKeys()
                    .hasOnly(['upvotes', 'downvotes', 'content']));
-      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isRole(request.auth.uid, 'admin'));
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']));
     }
 
     match /votes/{voteId} {
