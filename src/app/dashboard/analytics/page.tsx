@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { 
@@ -5,7 +6,8 @@ import {
   DollarSign, 
   Star, 
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  BookOpen
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { useCollection } from '@/firebase/firestore/use-collection';
