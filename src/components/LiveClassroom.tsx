@@ -69,6 +69,11 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
+  const participantsRef = useRef<UserProfile[]>([]);
+
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
 
   useEffect(() => {
     if (!firestore || !user) return;
@@ -95,29 +100,28 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
     joinRoom();
   
     const unsubscribeParticipants = onSnapshot(collection(roomRef, 'participants'), (snapshot) => {
-      const newParticipants: UserProfile[] = [];
+      const newParticipantsList: UserProfile[] = [];
       snapshot.forEach(doc => {
-          newParticipants.push(doc.data() as UserProfile);
+          newParticipantsList.push(doc.data() as UserProfile);
+      });
+
+      const currentParticipants = participantsRef.current;
+      const currentIds = new Set(currentParticipants.map(p => p.id));
+      const newIds = new Set(newParticipantsList.map(p => p.id));
+
+      newParticipantsList.forEach(p => {
+        if (!currentIds.has(p.id) && p.id !== user.uid) {
+          toast({ title: `${p.name} has joined.` });
+        }
       });
       
-      setParticipants(currentParticipants => {
-          const currentIds = new Set(currentParticipants.map(p => p.id));
-          const newIds = new Set(newParticipants.map(p => p.id));
-          
-          newParticipants.forEach(p => {
-              if(!currentIds.has(p.id) && p.id !== user.uid){
-                  toast({ title: `${p.name} has joined.`});
-              }
-          });
-
-          currentParticipants.forEach(p => {
-              if(!newIds.has(p.id) && p.id !== user.uid){
-                  toast({ title: `${p.name} has left.`, variant: "destructive" });
-              }
-          })
-
-          return newParticipants;
+      currentParticipants.forEach(p => {
+        if (!newIds.has(p.id) && p.id !== user.uid) {
+          toast({ title: `${p.name} has left.`, variant: "destructive" });
+        }
       });
+      
+      setParticipants(newParticipantsList);
     });
   
     // Cleanup function
@@ -125,6 +129,7 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       leaveRoom();
       unsubscribeParticipants();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, user, liveClass.id, toast]);
 
   // Setup media and signaling
