@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import { 
@@ -7,26 +6,30 @@ import {
   Star, 
   BookOpen,
   TrendingUp,
-  Eye,
   BarChart3,
   PlusCircle,
   Video,
-  MessageSquare
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { Course } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const TeacherDashboard: React.FC = () => {
     const firestore = useFirestore();
     const { user } = useUser();
+    const router = useRouter();
+    const { toast } = useToast();
+    const [isCreatingClass, setIsCreatingClass] = React.useState(false);
 
     const coursesQuery = user ? query(collection(firestore, 'courses'), where('instructorId', '==', user.uid)) : null;
     const { data: myCourses, loading: coursesLoading } = useCollection<Course>(coursesQuery);
@@ -36,8 +39,32 @@ const TeacherDashboard: React.FC = () => {
     const averageRating = React.useMemo(() => {
         if (!myCourses || myCourses.length === 0) return 0;
         const totalRating = myCourses.reduce((acc, course) => acc + course.rating, 0);
-        return (totalRating / myCourses.length).toFixed(2);
+        const ratedCourses = myCourses.filter(c => c.rating > 0).length;
+        if (ratedCourses === 0) return 'N/A';
+        return (totalRating / ratedCourses).toFixed(2);
     }, [myCourses]);
+
+    const handleStartLiveClass = async () => {
+        if (!user || !firestore) return;
+        setIsCreatingClass(true);
+        try {
+            const docRef = await addDoc(collection(firestore, 'liveClasses'), {
+                title: `Instant Class by ${user.displayName}`,
+                instructor: user.displayName,
+                course: 'General Session',
+                startTime: serverTimestamp(),
+                duration: 60,
+                attendees: 0,
+                isLive: true,
+            });
+            toast({ title: 'Live class created!', description: 'Redirecting you to the classroom...' });
+            router.push(`/dashboard/live/${docRef.id}`);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not start live class.' });
+            setIsCreatingClass(false);
+        }
+    };
 
     if (coursesLoading) {
         return (
@@ -56,13 +83,15 @@ const TeacherDashboard: React.FC = () => {
           <p className="text-muted-foreground mt-1">Manage your courses and track performance.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="btn-touch-target">
-            <Video className="h-4 w-4 mr-2" />
-            Start Live Class
+          <Button variant="outline" className="btn-touch-target" onClick={handleStartLiveClass} disabled={isCreatingClass}>
+            {isCreatingClass ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Video className="h-4 w-4 mr-2" />}
+            {isCreatingClass ? 'Starting...' : 'Start Live Class'}
           </Button>
-          <Button className="btn-touch-target">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Create Course
+          <Button className="btn-touch-target" asChild>
+            <Link href="/dashboard/create-course">
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Create Course
+            </Link>
           </Button>
         </div>
       </div>
@@ -75,7 +104,7 @@ const TeacherDashboard: React.FC = () => {
           icon={Users}
         />
         <StatCard
-          title="Course Revenue"
+          title="Est. Revenue"
           value={`$${courseRevenue.toLocaleString()}`}
           icon={DollarSign}
         />
@@ -170,6 +199,9 @@ const TeacherDashboard: React.FC = () => {
           {!coursesLoading && myCourses?.length === 0 && (
             <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <h3 className="text-lg font-medium">You haven't created any courses yet.</h3>
+                 <Button asChild className="mt-4">
+                    <Link href="/dashboard/create-course">Create Your First Course</Link>
+                </Button>
             </div>
           )}
         </div>
