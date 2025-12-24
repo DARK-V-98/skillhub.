@@ -27,11 +27,11 @@ const StudentDashboard: React.FC = () => {
   const firestore = useFirestore();
 
   const { data: enrolledCourses, loading: enrolledCoursesLoading } = useCollection<Course>(
-    firestore ? query(collection(firestore, 'courses'), where('progress', '!=', undefined)) : null
+    firestore ? query(collection(firestore, 'courses'), where('progress', '!=', null)) : null
   );
 
   const { data: recommendedCourses, loading: recommendedCoursesLoading } = useCollection<Course>(
-    firestore ? query(collection(firestore, 'courses'), where('progress', '==', undefined)) : null
+    firestore ? query(collection(firestore, 'courses'), where('progress', '==', null)) : null
   );
 
   const { data: liveClasses, loading: liveClassesLoading } = useCollection<LiveClass>(
