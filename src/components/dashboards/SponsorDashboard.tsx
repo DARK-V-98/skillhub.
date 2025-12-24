@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { 
@@ -12,20 +13,9 @@ import {
   MessageSquare
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
-import { sponsorStats } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Legend,
-} from 'recharts';
 import Image from 'next/image';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection, query } from 'firebase/firestore';
@@ -89,7 +79,7 @@ const SponsorDashboard: React.FC = () => {
         />
         <StatCard
           title="Impact Score (Demo)"
-          value={`${sponsorStats.impactScore}/100`}
+          value={`94/100`}
           icon={Heart}
         />
       </div>
@@ -104,43 +94,8 @@ const SponsorDashboard: React.FC = () => {
               Impact Over Time (Demo)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={sponsorStats.monthlyImpact}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: 'var(--radius)',
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="students"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
-                    name="Students"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="budget"
-                    stroke="hsl(var(--info))"
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--info))' }}
-                    name="Budget"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Impact chart coming soon.</p>
           </CardContent>
         </Card>
 
