@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRole } from '@/contexts/RoleContext';
@@ -9,10 +10,11 @@ import TeacherDashboard from '@/components/dashboards/TeacherDashboard';
 import SponsorDashboard from '@/components/dashboards/SponsorDashboard';
 import AdminDashboard from '@/components/dashboards/AdminDashboard';
 import { cn } from '@/lib/utils';
-import { useUser, signInWithGoogle } from '@/firebase/auth';
+import { useUser } from '@/firebase/auth/use-user';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const DashboardContent: React.FC = () => {
   const { currentRole } = useRole();
@@ -20,6 +22,7 @@ const DashboardContent: React.FC = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(false);
   const { user, loading } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -38,27 +41,20 @@ const DashboardContent: React.FC = () => {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+
   const renderDashboard = () => {
-    if (loading) {
+    if (loading || !user) {
       return (
         <div className="flex items-center justify-center h-screen">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       );
-    }
-    if (!user) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-150px)] text-center">
-                <h1 className="text-4xl font-bold mb-4 text-gradient">Welcome to SkillHub</h1>
-                <p className="mb-8 text-lg text-muted-foreground">Your journey to mastery starts here. Please sign in to continue.</p>
-                <Button
-                    onClick={signInWithGoogle}
-                    size="lg"
-                >
-                    Sign in with Google
-                </Button>
-            </div>
-        );
     }
     
     switch (currentRole) {

@@ -1,3 +1,4 @@
+
 'use client';
 import {
   getAuth,
@@ -5,6 +6,8 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut as firebaseSignOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
   type User,
 } from 'firebase/auth';
 import { app } from './config';
@@ -18,8 +21,22 @@ export const signInWithGoogle = async () => {
     await signInWithPopup(auth, provider);
   } catch (error) {
     console.error("Error signing in with Google: ", error);
+    throw error;
   }
 };
+
+export const signUpWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
+    const auth = getAuth(app);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+};
+
+export const signInWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
+    const auth = getAuth(app);
+    const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+};
+
 
 export const signOut = async () => {
   const auth = getAuth(app);

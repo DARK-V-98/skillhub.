@@ -98,10 +98,10 @@ export default function HomePage() {
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild>
-              <Link href="/dashboard">Sign In</Link>
+              <Link href="/login">Sign In</Link>
             </Button>
             <Button asChild>
-              <Link href="/dashboard">Sign Up</Link>
+              <Link href="/login">Sign Up</Link>
             </Button>
           </div>
         </div>
