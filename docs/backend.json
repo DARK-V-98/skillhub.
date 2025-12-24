@@ -11,7 +11,9 @@
                 "avatar": { "type": "string", "format": "uri" },
                 "role": { "type": "string", "enum": ["user", "student", "teacher", "sponsor", "admin", "developer"] },
                 "postCount": { "type": "number" },
-                "commentCount": { "type": "number" }
+                "commentCount": { "type": "number" },
+                "mute": { "type": "boolean", "description": "Command from a moderator to mute the user's mic." },
+                "stopVideo": { "type": "boolean", "description": "Command from a moderator to stop the user's video." }
             },
             "required": ["name", "email", "role"]
         },
@@ -44,13 +46,14 @@
             "properties": {
                 "title": { "type": "string" },
                 "instructor": { "type": "string" },
+                "instructorId": { "type": "string" },
                 "course": { "type": "string" },
                 "startTime": { "type": "string", "format": "date-time" },
                 "duration": { "type": "number" },
                 "attendees": { "type": "number" },
                 "isLive": { "type": "boolean" }
             },
-            "required": ["title", "instructor", "startTime", "duration"]
+            "required": ["title", "instructor", "instructorId", "startTime", "duration"]
         },
         "chatMessage": {
             "title": "Chat Message",
@@ -149,18 +152,6 @@
                 "participantCount": { "type": "number" }
             },
             "required": ["name", "createdBy", "creatorName", "createdAt"]
-        },
-        "participant": {
-            "title": "Participant",
-            "description": "Represents a participant in a live class or study room.",
-            "type": "object",
-            "properties": {
-                "uid": { "type": "string" },
-                "name": { "type": "string" },
-                "avatar": { "type": "string", "format": "uri" },
-                "joinedAt": { "type": "string", "format": "date-time" }
-            },
-            "required": ["uid", "name"]
         }
     },
     "auth": {
@@ -188,8 +179,8 @@
             "description": "Signaling document for WebRTC calls."
         },
         "/liveClasses/{classId}/participants/{participantId}": {
-            "schema": { "$ref": "#/entities/participant" },
-            "description": "Sub-collection of participants for a specific live class."
+            "schema": { "$ref": "#/entities/userProfile" },
+            "description": "Sub-collection of participants for a specific live class. Also used for moderation signals."
         },
         "/users/{userId}/achievements": {
             "schema": { "$ref": "#/entities/achievement" },
@@ -224,8 +215,10 @@
             "description": "Signaling document for WebRTC calls."
         },
         "/studyRooms/{roomId}/participants/{participantId}": {
-            "schema": { "$ref": "#/entities/participant" },
+            "schema": { "$ref": "#/entities/userProfile" },
             "description": "Sub-collection of participants for a specific study room."
         }
     }
 }
+
+    

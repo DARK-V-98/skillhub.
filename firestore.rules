@@ -51,6 +51,8 @@ service cloud.firestore {
     
     match /liveClasses/{classId}/participants/{participantId} {
       allow read, write: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(participantId) || isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']));
+      allow delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
     }
 
     match /users/{userId}/achievements/{achievementId} {
@@ -100,3 +102,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

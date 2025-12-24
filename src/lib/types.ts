@@ -9,6 +9,8 @@ export interface UserProfile {
   role: UserRole;
   postCount?: number;
   commentCount?: number;
+  mute?: boolean;
+  stopVideo?: boolean;
 }
 
 export interface Course {
@@ -33,6 +35,7 @@ export interface LiveClass {
   id: string;
   title: string;
   instructor: string;
+  instructorId: string;
   course: string;
   startTime: string; // ISO 8601 date string
   duration: number;
@@ -123,3 +126,5 @@ export interface StudyRoom {
     createdAt: any; // ServerTimestamp
     participantCount: number;
 }
+
+    

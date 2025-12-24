@@ -18,7 +18,7 @@ import {
   increment,
 } from 'firebase/firestore';
 import { Button } from './ui/button';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users, MoreVertical, XCircle, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -27,6 +27,7 @@ import { Input } from './ui/input';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 interface LiveClassroomProps {
   liveClass: LiveClass;
@@ -78,14 +79,31 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
   const [participants, setParticipants] = useState<UserProfile[]>([]);
   
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
+  const isTeacher = user?.uid === liveClass.instructorId;
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideosRef = useRef<{[key: string]: HTMLVideoElement}>({});
 
-  const allStreams = localStream ? [{ id: 'local', stream: localStream, user: { id: user!.uid, name: `${user!.displayName} (You)`} }, ...remoteStreams] : remoteStreams;
+  const allStreams = localStream ? [{ id: user!.uid, stream: localStream, user: { id: user!.uid, name: `${user!.displayName} (You)`} }, ...remoteStreams] : remoteStreams;
 
+  
   useEffect(() => {
     if (!firestore || !user) return;
 
     const roomRef = doc(firestore, 'liveClasses', liveClass.id);
     const participantRef = doc(roomRef, 'participants', user.uid);
+
+    // Subscribe to moderation commands
+    const unsubscribeModeration = onSnapshot(participantRef, (docSnap) => {
+        const data = docSnap.data();
+        if (data?.mute) {
+            toggleMic(true);
+            updateDoc(participantRef, { mute: false }); // Reset command
+        }
+        if (data?.stopVideo) {
+            toggleCamera(true);
+            updateDoc(participantRef, { stopVideo: false }); // Reset command
+        }
+    });
 
     const joinRoom = async () => {
       await setDoc(participantRef, {
@@ -94,49 +112,59 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
         avatar: user.photoURL,
         joinedAt: serverTimestamp(),
       }, { merge: true });
-      await updateDoc(roomRef, { participantCount: increment(1) });
-      toast({ title: "You have joined the class", variant: "default" });
     };
-
+  
     const leaveRoom = async () => {
-      try {
-        await deleteDoc(participantRef);
-        await updateDoc(roomRef, { participantCount: increment(-1) });
-      } catch (error) {
-        // Ignore errors on leaving, e.g. if doc already deleted.
-      }
+        try {
+            await deleteDoc(participantRef);
+        } catch(error) {
+            // Ignore errors, e.g. if doc is already deleted
+        }
     };
-
+  
     joinRoom();
-
-    const unsubscribeParticipants = onSnapshot(collection(roomRef, 'participants'), (snapshot) => {
+  
+    const unsubscribeParticipants = onSnapshot(query(collection(roomRef, 'participants'), orderBy('name')), (snapshot) => {
         const newParticipantsList: UserProfile[] = [];
+        let participantCount = 0;
         snapshot.forEach(doc => {
+            participantCount++;
             newParticipantsList.push(doc.data() as UserProfile);
         });
 
+        // Update main class document with participant count
+        updateDoc(roomRef, { attendees: participantCount });
+        
+        const oldParticipants = participants;
+        setParticipants(newParticipantsList);
+
         // Defer notification logic to avoid happening during render
         setTimeout(() => {
-            setParticipants(oldParticipants => {
-                const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, oldParticipants);
-                joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
-                left.forEach(p => toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" }));
-                return newParticipantsList;
-            });
+            const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, oldParticipants);
+            joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
+            left.forEach(p => toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" }));
         }, 0);
     });
+  
+    // Listen for own document deletion (kick)
+    const unsubscribeSelf = onSnapshot(participantRef, (docSnap) => {
+        if (!docSnap.exists()) {
+            toast({ title: "You have been removed from the class.", variant: "destructive"});
+            hangUp();
+        }
+    });
 
-    // Cleanup function
     return () => {
       leaveRoom();
       unsubscribeParticipants();
+      unsubscribeModeration();
+      unsubscribeSelf();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, user, liveClass.id]);
-
-
+  
   const handleJoinLeaveNotifications = useCallback((newParticipants: UserProfile[], oldParticipants: UserProfile[]) => {
-      if (!user) return { joined: [], left: [] };
+      if (!user || oldParticipants.length === 0) return { joined: [], left: [] };
   
       const oldIds = new Set(oldParticipants.map(p => p.id));
       const newIds = new Set(newParticipants.map(p => p.id));
@@ -147,18 +175,17 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       return { joined, left };
   }, [user]);
 
-
-  // Setup media and signaling
   useEffect(() => {
     if (!user || !firestore) return;
 
     const setupMediaAndSignaling = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+        }
         setLocalStream(stream);
-        stream.getTracks().forEach(track => {
-          pc.addTrack(track, stream);
-        });
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
       } catch (error) {
         toast({ variant: 'destructive', title: 'Media Error', description: 'Could not access camera/mic.' });
         return;
@@ -168,59 +195,52 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       const offerCandidates = collection(callDoc, 'offerCandidates');
       const answerCandidates = collection(callDoc, 'answerCandidates');
 
-      pc.onicecandidate = event => {
-        event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
-      };
+      pc.onicecandidate = event => event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
 
       const offerDescription = await pc.createOffer();
       await pc.setLocalDescription(offerDescription);
 
-      const offer = {
-        sdp: offerDescription.sdp,
-        type: offerDescription.type,
-      };
-
-      await setDoc(callDoc, { offer });
+      await setDoc(callDoc, { offer: { sdp: offerDescription.sdp, type: offerDescription.type } });
 
       onSnapshot(callDoc, (snapshot) => {
         const data = snapshot.data();
         if (!pc.currentRemoteDescription && data?.answer) {
-          const answerDescription = new RTCSessionDescription(data.answer);
-          pc.setRemoteDescription(answerDescription);
+          pc.setRemoteDescription(new RTCSessionDescription(data.answer));
         }
       });
       
       onSnapshot(answerCandidates, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
-          if (change.type === 'added') {
-            const candidate = new RTCIceCandidate(change.doc.data());
-            pc.addIceCandidate(candidate);
-          }
+          if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
         });
       });
       
       pc.ontrack = (event) => {
         const stream = event.streams[0];
+        const streamId = stream.id; // Or a unique ID from signaling
+        
+        // Find user info for this stream
+        // This is a simplified approach; a more robust solution would map track IDs to user IDs
+        const participantUser = participants.find(p => p.id !== user.uid) || { id: streamId, name: 'Participant' };
+
+
         setRemoteStreams(prev => {
-            if(prev.find(s => s.id === stream.id)) return prev;
-            // A placeholder until we get the actual user info
-            const participantUser = { id: stream.id, name: 'Participant' };
-            return [...prev, { id: stream.id, stream, user: participantUser }];
+            if(prev.find(s => s.id === streamId)) return prev;
+            return [...prev, { id: streamId, stream, user: participantUser }];
         });
       };
     };
 
     setupMediaAndSignaling();
 
-  }, [pc, user, firestore, liveClass.id, toast]);
+  }, [pc, user, firestore, liveClass.id, toast, participants]);
 
     useEffect(() => {
     if (!firestore || !liveClass.id) return;
 
     const messagesQuery = query(collection(firestore, 'liveClasses', liveClass.id, 'messages'), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-        const chatMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
-        setMessages(chatMessages);
+        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage)));
     });
 
     return () => unsubscribe();
@@ -243,17 +263,21 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
   };
 
 
-  const toggleMic = () => {
+  const toggleMic = (forceOff = false) => {
     if (localStream) {
-      localStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
-      setIsMicOn(prev => !prev);
+      const currentlyOn = localStream.getAudioTracks().some(track => track.enabled);
+      const turnOff = forceOff || currentlyOn;
+      localStream.getAudioTracks().forEach(track => track.enabled = !turnOff);
+      setIsMicOn(!turnOff);
     }
   };
 
-  const toggleCamera = () => {
+  const toggleCamera = (forceOff = false) => {
     if (localStream) {
-      localStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
-      setIsCameraOn(prev => !prev);
+      const currentlyOn = localStream.getVideoTracks().some(track => track.enabled);
+      const turnOff = forceOff || currentlyOn;
+      localStream.getVideoTracks().forEach(track => track.enabled = !turnOff);
+      setIsCameraOn(!turnOff);
     }
   };
 
@@ -269,17 +293,16 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
             screenTrackRef.current = videoSender.track; // Save original camera track
             videoSender.replaceTrack(screenTrack);
             
-            // Also update the local stream to show the screen share
             const newLocalStream = new MediaStream([screenTrack, ...localStream.getAudioTracks()]);
-            setLocalStream(newLocalStream);
+            if (localVideoRef.current) localVideoRef.current.srcObject = newLocalStream;
 
             setIsScreenSharing(true);
 
             screenTrack.onended = () => {
                 if (screenTrackRef.current) {
                     videoSender.replaceTrack(screenTrackRef.current);
-                    const newStream = new MediaStream([screenTrackRef.current, ...localStream.getAudioTracks()]);
-                    setLocalStream(newStream);
+                    const originalStream = new MediaStream([screenTrackRef.current!, ...localStream.getAudioTracks()]);
+                    if (localVideoRef.current) localVideoRef.current.srcObject = originalStream;
                     screenTrackRef.current = null;
                 }
                 setIsScreenSharing(false);
@@ -290,13 +313,13 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
     } else {
         if (screenTrackRef.current) {
             videoSender.replaceTrack(screenTrackRef.current);
-            const newStream = new MediaStream([screenTrackRef.current, ...localStream.getAudioTracks()]);
-            setLocalStream(newStream);
+            const originalStream = new MediaStream([screenTrackRef.current!, ...localStream.getAudioTracks()]);
+            if (localVideoRef.current) localVideoRef.current.srcObject = originalStream;
             screenTrackRef.current = null;
         }
         setIsScreenSharing(false);
     }
-};
+  };
 
   const hangUp = async () => {
     pc?.close();
@@ -320,38 +343,55 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
     router.push('/dashboard/live-classes');
   };
 
-  const gridCols = `grid-cols-${Math.min(Math.ceil(Math.sqrt(allStreams.length)), 4)}`;
-  const gridRows = `grid-rows-${Math.min(Math.ceil(allStreams.length / Math.ceil(Math.sqrt(allStreams.length))), 4)}`;
+  const moderateParticipant = async (participantId: string, action: 'kick' | 'mute' | 'stopVideo') => {
+    if (!firestore || !isTeacher) return;
+    const participantRef = doc(firestore, 'liveClasses', liveClass.id, 'participants', participantId);
+    if (action === 'kick') {
+        await deleteDoc(participantRef);
+        toast({ title: 'Participant removed' });
+    } else {
+        await updateDoc(participantRef, { [action]: true });
+        toast({ title: `Participant ${action === 'mute' ? 'muted' : 'video stopped'}` });
+    }
+};
 
+  const numStreams = 1 + remoteStreams.length;
+  const gridLayout = 
+      numStreams === 1 ? "grid-cols-1 grid-rows-1" :
+      numStreams === 2 ? "grid-cols-2 grid-rows-1" :
+      numStreams <= 4 ? "grid-cols-2 grid-rows-2" :
+      numStreams <= 6 ? "grid-cols-3 grid-rows-2" :
+      numStreams <= 9 ? "grid-cols-3 grid-rows-3" :
+      "grid-cols-4 grid-rows-3";
 
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-black rounded-lg overflow-hidden text-white">
-      <div className="flex-1 flex flex-col relative">
-        <div className="flex-1 overflow-auto p-2 relative">
-            <div className={cn('grid gap-2 h-full w-full', gridCols, gridRows)}>
-                {allStreams.map(({ id, stream, user: streamUser }) => (
-                    <div key={id} className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
-                        <video 
-                          ref={el => { if (el) el.srcObject = stream; }}
-                          autoPlay 
-                          playsInline 
-                          muted={id === 'local'}
-                          className="w-full h-full object-cover" 
-                        />
+        <div className="flex-1 flex flex-col relative">
+            <div className={cn("grid gap-2 h-full w-full p-2 overflow-auto", gridLayout)}>
+                {localStream && (
+                    <div className="relative bg-gray-900 rounded-md overflow-hidden">
+                        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
+                    </div>
+                )}
+                {remoteStreams.map(({ id, stream, user: streamUser }) => (
+                    <div key={id} className="relative bg-gray-900 rounded-md overflow-hidden">
+                        <video ref={el => { if(el) el.srcObject = stream }} autoPlay playsInline className="w-full h-full object-cover" />
                         <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{streamUser.name}</div>
                     </div>
                 ))}
             </div>
+
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex justify-center items-center gap-2 sm:gap-4 z-10">
                 <TooltipProvider>
                     <Tooltip><TooltipTrigger asChild>
-                        <Button onClick={toggleMic} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
+                        <Button onClick={() => toggleMic()} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
                             {isMicOn ? <Mic /> : <MicOff />}
                         </Button>
                     </TooltipTrigger><TooltipContent>{isMicOn ? 'Mute' : 'Unmute'}</TooltipContent></Tooltip>
 
                     <Tooltip><TooltipTrigger asChild>
-                        <Button onClick={toggleCamera} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
+                        <Button onClick={() => toggleCamera()} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
                             {isCameraOn ? <Video /> : <VideoOff />}
                         </Button>
                     </TooltipTrigger><TooltipContent>{isCameraOn ? 'Stop Camera' : 'Start Camera'}</TooltipContent></Tooltip>
@@ -380,7 +420,6 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
                 <PhoneOff />
                 </Button>
             </div>
-        </div>
       </div>
 
       {(isChatOpen || isParticipantsOpen) && (
@@ -446,21 +485,45 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
                     </div>
                     <div className="flex-1 p-4 space-y-3 overflow-y-auto">
                         {participants.map(p => (
-                            <div key={p.id} className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={p.avatar} />
-                                    <AvatarFallback>{p.name ? p.name.charAt(0) : 'U'}</AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium">{p.name || 'Anonymous User'} {p.id === user?.uid ? '(You)' : ''}</span>
+                            <div key={p.id} className="flex items-center justify-between gap-3 group">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={p.avatar} />
+                                        <AvatarFallback>{p.name ? p.name.charAt(0) : 'U'}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{p.name || 'Anonymous User'} {p.id === user?.uid ? '(You)' : ''}</span>
+                                </div>
+                                {isTeacher && user && p.id !== user.uid && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => moderateParticipant(p.id, 'mute')}>
+                                                <VolumeX className="mr-2 h-4 w-4" /> Mute Mic
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => moderateParticipant(p.id, 'stopVideo')}>
+                                                <VideoOff className="mr-2 h-4 w-4" /> Stop Video
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive" onClick={() => moderateParticipant(p.id, 'kick')}>
+                                                <XCircle className="mr-2 h-4 w-4" /> Kick User
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
                             </div>
                         ))}
                     </div>
                 </>
             )}
           </div>
-      )}
+        )}
     </div>
   );
 };
 
 export default LiveClassroom;
+
+    
