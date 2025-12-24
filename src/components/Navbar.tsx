@@ -91,14 +91,14 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                 variant="ghost"
                 size="icon"
                 onClick={onMobileMenuToggle}
-                className="lg:hidden btn-touch-target"
+                className="md:hidden btn-touch-target"
                 aria-label="Toggle menu"
             >
                 <Menu className="h-5 w-5" />
             </Button>
           )}
           <Link href={user ? '/dashboard' : '/'}>
-            <Logo size="md" />
+            <Logo size="lg" showText={false} />
           </Link>
         </div>
         
@@ -226,7 +226,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                     className="btn-touch-target flex items-center gap-2 px-2"
                     aria-label="User menu"
                   >
-                    {user.photoURL ? (
+                    {user?.photoURL ? (
                       <Image
                         src={user.photoURL}
                         alt={user.displayName || 'User Avatar'}
@@ -244,8 +244,8 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                 <DropdownMenuContent align="end" className="w-56 bg-popover">
                   <DropdownMenuLabel>
                     <div className="flex flex-col">
-                      <span>{user.displayName}</span>
-                      <span className="text-sm font-normal text-muted-foreground">{user.email}</span>
+                      <span>{user?.displayName}</span>
+                      <span className="text-sm font-normal text-muted-foreground">{user?.email}</span>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />

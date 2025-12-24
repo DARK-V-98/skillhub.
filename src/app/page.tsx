@@ -80,7 +80,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <Logo size="md" />
+            <Logo size="lg" showText={false} />
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
             <Link href="#courses" className="transition-colors hover:text-primary">
@@ -326,7 +326,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="md:col-span-2">
-              <Logo size="md" />
+              <Logo size="lg" showText={false} />
               <p className="mt-4 text-muted-foreground max-w-xs">
                 Empowering learners and educators worldwide with accessible, quality education.
               </p>
