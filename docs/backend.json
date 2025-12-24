@@ -149,6 +149,18 @@
                 "participantCount": { "type": "number" }
             },
             "required": ["name", "createdBy", "creatorName", "createdAt"]
+        },
+        "participant": {
+            "title": "Participant",
+            "description": "Represents a participant in a live class or study room.",
+            "type": "object",
+            "properties": {
+                "uid": { "type": "string" },
+                "name": { "type": "string" },
+                "avatar": { "type": "string", "format": "uri" },
+                "joinedAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["uid", "name"]
         }
     },
     "auth": {
@@ -170,6 +182,14 @@
         "/liveClasses/{classId}/messages": {
             "schema": { "$ref": "#/entities/chatMessage" },
             "description": "Sub-collection of chat messages for a specific live class."
+        },
+        "/liveClasses/{classId}/calls/{callId}": {
+            "schema": { "type": "object" },
+            "description": "Signaling document for WebRTC calls."
+        },
+        "/liveClasses/{classId}/participants/{participantId}": {
+            "schema": { "$ref": "#/entities/participant" },
+            "description": "Sub-collection of participants for a specific live class."
         },
         "/users/{userId}/achievements": {
             "schema": { "$ref": "#/entities/achievement" },
@@ -202,6 +222,10 @@
         "/studyRooms/{roomId}/calls/{callId}": {
             "schema": { "type": "object" },
             "description": "Signaling document for WebRTC calls."
+        },
+        "/studyRooms/{roomId}/participants/{participantId}": {
+            "schema": { "$ref": "#/entities/participant" },
+            "description": "Sub-collection of participants for a specific study room."
         }
     }
 }

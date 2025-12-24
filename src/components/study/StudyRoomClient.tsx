@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { StudyRoom } from '@/lib/types';
+import { StudyRoom, UserProfile } from '@/lib/types';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
 import {
@@ -15,7 +15,7 @@ import {
   deleteDoc,
   getDocs,
   setDoc,
-  increment
+  increment,
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users } from 'lucide-react';
@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface StudyRoomClientProps {
   studyRoom: StudyRoom;
@@ -60,93 +61,95 @@ const StudyRoomClient: React.FC<StudyRoomClientProps> = ({ studyRoom }) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(true);
+  const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [participants, setParticipants] = useState<UserProfile[]>([]);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
 
-  // Participant cleanup on unmount
   useEffect(() => {
+    if (!firestore || !user) return;
+  
+    const roomRef = doc(firestore, 'studyRooms', studyRoom.id);
+    const participantRef = doc(roomRef, 'participants', user.uid);
+  
+    const joinRoom = async () => {
+      await setDoc(participantRef, {
+        uid: user.uid,
+        name: user.displayName,
+        avatar: user.photoURL,
+        joinedAt: serverTimestamp(),
+      });
+      await updateDoc(roomRef, { participantCount: increment(1) });
+      toast({ title: "You have joined the room" });
+    };
+  
+    const leaveRoom = async () => {
+      await deleteDoc(participantRef);
+      await updateDoc(roomRef, { participantCount: increment(-1) });
+    };
+  
+    joinRoom();
+  
+    const unsubscribeParticipants = onSnapshot(collection(roomRef, 'participants'), (snapshot) => {
+        const newParticipants: UserProfile[] = [];
+        snapshot.forEach(doc => {
+            newParticipants.push(doc.data() as UserProfile);
+        });
+        setParticipants(newParticipants);
+    });
+  
     return () => {
-        if(firestore && user) {
-            const roomRef = doc(firestore, 'studyRooms', studyRoom.id);
-            updateDoc(roomRef, {
-                participantCount: increment(-1)
-            });
-        }
-    }
-  },[firestore, user, studyRoom.id]);
+      leaveRoom();
+      unsubscribeParticipants();
+    };
+  }, [firestore, user, studyRoom.id, toast]);
 
-  // Setup media and signaling
   useEffect(() => {
     if (!user || !firestore) return;
 
     const setupMediaAndSignaling = async () => {
-      // 1. Get local media
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setLocalStream(stream);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
-        stream.getTracks().forEach(track => {
-          pc.addTrack(track, stream);
-        });
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
       } catch (error) {
         toast({ variant: 'destructive', title: 'Media Error', description: 'Could not access camera/mic.' });
         return;
       }
       
-      const roomRef = doc(firestore, 'studyRooms', studyRoom.id);
-      await updateDoc(roomRef, { participantCount: increment(1) });
-
       const callDoc = doc(collection(firestore, 'studyRooms', studyRoom.id, 'calls'));
       const offerCandidates = collection(callDoc, 'offerCandidates');
       const answerCandidates = collection(callDoc, 'answerCandidates');
 
-      pc.onicecandidate = event => {
-        event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
-      };
+      pc.onicecandidate = event => event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
 
-      // 2. Create offer
       const offerDescription = await pc.createOffer();
       await pc.setLocalDescription(offerDescription);
 
-      const offer = {
-        sdp: offerDescription.sdp,
-        type: offerDescription.type,
-      };
+      await setDoc(callDoc, { offer: { sdp: offerDescription.sdp, type: offerDescription.type } });
 
-      await setDoc(callDoc, { offer });
-
-      // 3. Listen for answer
       onSnapshot(callDoc, (snapshot) => {
         const data = snapshot.data();
         if (!pc.currentRemoteDescription && data?.answer) {
-          const answerDescription = new RTCSessionDescription(data.answer);
-          pc.setRemoteDescription(answerDescription);
+          pc.setRemoteDescription(new RTCSessionDescription(data.answer));
         }
       });
       
-      // 4. Listen for remote ICE candidates
       onSnapshot(answerCandidates, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
-          if (change.type === 'added') {
-            const candidate = new RTCIceCandidate(change.doc.data());
-            pc.addIceCandidate(candidate);
-          }
+          if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
         });
       });
       
-       // 5. Handle remote stream
-        pc.ontrack = (event) => {
-            setRemoteStreams(prev => {
-                // Avoid adding duplicate streams
-                if(prev.find(s => s.id === event.streams[0].id)) return prev;
-                return [...prev, event.streams[0]]
-            });
-        };
+      pc.ontrack = (event) => {
+        setRemoteStreams(prev => prev.find(s => s.id === event.streams[0].id) ? prev : [...prev, event.streams[0]]);
+      };
     };
 
     setupMediaAndSignaling();
@@ -158,8 +161,7 @@ const StudyRoomClient: React.FC<StudyRoomClientProps> = ({ studyRoom }) => {
 
     const messagesQuery = query(collection(firestore, 'studyRooms', studyRoom.id, 'messages'), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-        const chatMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
-        setMessages(chatMessages);
+        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage)));
     });
 
     return () => unsubscribe();
@@ -211,9 +213,7 @@ const StudyRoomClient: React.FC<StudyRoomClientProps> = ({ studyRoom }) => {
 
             screenTrack.onended = () => {
                 const cameraTrack = localStream.getVideoTracks()[0];
-                if (cameraTrack) {
-                    videoSender.replaceTrack(cameraTrack);
-                }
+                if (cameraTrack) videoSender.replaceTrack(cameraTrack);
                 setIsScreenSharing(false);
             };
         } catch (err) {
@@ -221,9 +221,7 @@ const StudyRoomClient: React.FC<StudyRoomClientProps> = ({ studyRoom }) => {
         }
     } else {
         const cameraTrack = localStream.getVideoTracks()[0];
-        if (cameraTrack) {
-            videoSender.replaceTrack(cameraTrack);
-        }
+        if (cameraTrack) videoSender.replaceTrack(cameraTrack);
         screenTrackRef.current?.stop();
         setIsScreenSharing(false);
     }
@@ -251,17 +249,21 @@ const StudyRoomClient: React.FC<StudyRoomClientProps> = ({ studyRoom }) => {
     router.push('/dashboard/study-rooms');
   };
 
+  const allStreamsCount = remoteStreams.length + 1;
+  const gridCols = allStreamsCount <= 4 ? 'grid-cols-2' : 'grid-cols-3';
+  const gridRows = allStreamsCount <= 2 ? 'grid-rows-1' : 'grid-rows-2';
+
   return (
-    <div className="flex h-[calc(100vh-8rem)] bg-black rounded-lg overflow-hidden relative">
-       <div className="flex-1 flex flex-col relative">
-        <div className="flex-1 overflow-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 h-full">
-                <div className="relative bg-gray-900 rounded-md overflow-hidden">
+    <div className="flex h-[calc(100vh-8rem)] bg-black rounded-lg overflow-hidden relative text-white">
+      <div className="flex-1 flex flex-col relative transition-all duration-300" style={{ marginRight: (isChatOpen || isParticipantsOpen) ? '320px' : '0' }}>
+        <div className="flex-1 overflow-auto p-2">
+            <div className={cn('grid gap-2 h-full w-full', gridCols, gridRows)}>
+                <div className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
                     <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                     <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
                 </div>
                 {remoteStreams.map((stream, index) => (
-                    <div key={index} className="relative bg-gray-900 rounded-md overflow-hidden">
+                    <div key={index} className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
                         <video ref={el => { if (el) el.srcObject = stream; }} autoPlay playsInline className="w-full h-full object-cover" />
                         <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">Participant {index+1}</div>
                     </div>
@@ -270,50 +272,93 @@ const StudyRoomClient: React.FC<StudyRoomClientProps> = ({ studyRoom }) => {
         </div>
       </div>
 
-      <div className={cn("bg-gray-900/80 backdrop-blur-sm transition-all duration-300 overflow-hidden flex flex-col", isChatOpen ? "w-80" : "w-0")}>
-        <div className="p-4 border-b border-gray-700">
-            <h3 className="text-white font-semibold">Live Chat</h3>
-        </div>
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-            {messages.map(msg => (
-                 <div key={msg.id} className="flex items-start gap-2.5">
-                    <Avatar className="w-8 h-8">
-                        <AvatarImage src={msg.authorAvatar}/>
-                        <AvatarFallback>{msg.authorName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col gap-1 w-full max-w-[320px]">
-                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                            <span className="text-sm font-semibold text-white">{msg.authorName}</span>
-                            <span className="text-xs font-normal text-gray-400">{msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt.seconds * 1000), { addSuffix: true }) : ''}</span>
-                        </div>
-                        <div className="leading-tight p-3 rounded-xl bg-gray-800 text-white">
-                           <p className="text-sm font-normal">{msg.text}</p>
-                        </div>
-                    </div>
+      <div className={cn("absolute top-0 right-0 h-full bg-gray-900/80 backdrop-blur-sm transition-transform duration-300 overflow-hidden flex flex-col w-80", isChatOpen || isParticipantsOpen ? 'translate-x-0' : 'translate-x-full')}>
+        {isChatOpen && (
+            <>
+                <div className="p-4 border-b border-gray-700">
+                    <h3 className="text-white font-semibold">Room Chat</h3>
                 </div>
-            ))}
-        </div>
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-700 flex items-center gap-2">
-            <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="bg-gray-800 border-gray-700 text-white"/>
-            <Button type="submit" size="icon" disabled={!newMessage.trim()}><Send className="h-4 w-4"/></Button>
-        </form>
+                <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+                    {messages.map(msg => (
+                         <div key={msg.id} className="flex items-start gap-2.5">
+                            <Avatar className="w-8 h-8">
+                                <AvatarImage src={msg.authorAvatar}/>
+                                <AvatarFallback>{msg.authorName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col gap-1 w-full max-w-[320px]">
+                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                    <span className="text-sm font-semibold text-white">{msg.authorName}</span>
+                                    <span className="text-xs font-normal text-gray-400">{msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt.seconds * 1000), { addSuffix: true }) : ''}</span>
+                                </div>
+                                <div className="leading-tight p-3 rounded-xl bg-gray-800 text-white">
+                                   <p className="text-sm font-normal">{msg.text}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-700 flex items-center gap-2">
+                    <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="bg-gray-800 border-gray-700 text-white"/>
+                    <Button type="submit" size="icon" disabled={!newMessage.trim()}><Send className="h-4 w-4"/></Button>
+                </form>
+            </>
+        )}
+        {isParticipantsOpen && (
+            <>
+                <div className="p-4 border-b border-gray-700">
+                    <h3 className="text-white font-semibold">Participants ({participants.length})</h3>
+                </div>
+                <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+                    {participants.map(p => (
+                        <div key={p.id} className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src={p.avatar} />
+                                <AvatarFallback>{p.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{p.name} {p.id === user?.uid ? '(You)' : ''}</span>
+                        </div>
+                    ))}
+                </div>
+            </>
+        )}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex justify-center items-center gap-4 z-10">
-        <Button onClick={toggleMic} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
-          {isMicOn ? <Mic /> : <MicOff />}
-        </Button>
-        <Button onClick={toggleCamera} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
-          {isCameraOn ? <Video /> : <VideoOff />}
-        </Button>
-        <Button onClick={handleScreenShare} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isScreenSharing && "bg-blue-500 hover:bg-blue-600")}>
-          {isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
-        </Button>
-        <Button onClick={hangUp} variant="destructive" size="icon" className="rounded-full w-16 h-12">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex justify-center items-center gap-2 sm:gap-4 z-10">
+        <TooltipProvider>
+            <Tooltip><TooltipTrigger asChild>
+                <Button onClick={toggleMic} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
+                    {isMicOn ? <Mic /> : <MicOff />}
+                </Button>
+            </TooltipTrigger><TooltipContent>{isMicOn ? 'Mute' : 'Unmute'}</TooltipContent></Tooltip>
+
+            <Tooltip><TooltipTrigger asChild>
+                <Button onClick={toggleCamera} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
+                    {isCameraOn ? <Video /> : <VideoOff />}
+                </Button>
+            </TooltipTrigger><TooltipContent>{isCameraOn ? 'Stop Camera' : 'Start Camera'}</TooltipContent></Tooltip>
+
+            <Tooltip><TooltipTrigger asChild>
+                <Button onClick={handleScreenShare} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isScreenSharing && "bg-primary hover:bg-primary/90")}>
+                    {isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
+                </Button>
+            </TooltipTrigger><TooltipContent>{isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</TooltipContent></Tooltip>
+
+            <Tooltip><TooltipTrigger asChild>
+                 <Button onClick={() => { setIsParticipantsOpen(false); setIsChatOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isChatOpen && 'bg-primary/80')}>
+                    <MessageSquare />
+                </Button>
+            </TooltipTrigger><TooltipContent>Chat</TooltipContent></Tooltip>
+
+            <Tooltip><TooltipTrigger asChild>
+                <Button onClick={() => { setIsChatOpen(false); setIsParticipantsOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white relative", isParticipantsOpen && 'bg-primary/80')}>
+                    <Users />
+                    <Badge className="absolute -top-1 -right-1 px-1.5 h-5">{participants.length}</Badge>
+                </Button>
+            </TooltipTrigger><TooltipContent>Participants</TooltipContent></Tooltip>
+        </TooltipProvider>
+
+        <Button onClick={hangUp} variant="destructive" size="icon" className="rounded-full w-16 h-12 ml-4">
           <PhoneOff />
-        </Button>
-         <Button onClick={() => setIsChatOpen(!isChatOpen)} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isChatOpen && 'bg-primary/80')}>
-          <MessageSquare />
         </Button>
       </div>
     </div>
