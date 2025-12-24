@@ -5,6 +5,10 @@ import { CheckCircle, Users, BarChart, Heart, Video, PenTool, TrendingUp, BookOp
 import Image from 'next/image';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import StudentForm from '@/components/StudentForm';
+import TeacherForm from '@/components/TeacherForm';
+import SponsorForm from '@/components/SponsorForm';
 
 const features = [
   {
@@ -191,7 +195,18 @@ export default function HomePage() {
                     <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Personalized Learning Paths</li>
                     <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Peer-to-Peer Collaboration</li>
                   </ul>
-                  <Button variant="outline" className="mt-6 w-full">Explore Courses</Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="mt-6 w-full">Explore Courses</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Start Your Learning Journey</DialogTitle>
+                        <DialogDescription>Sign up to explore our wide range of courses.</DialogDescription>
+                      </DialogHeader>
+                      <StudentForm />
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </Card>
               <Card className="overflow-hidden card-hover">
@@ -203,7 +218,18 @@ export default function HomePage() {
                     <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Powerful Authoring Tools</li>
                     <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Audience Engagement Analytics</li>
                   </ul>
-                  <Button variant="outline" className="mt-6 w-full">Become A Teacher</Button>
+                   <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="mt-6 w-full">Become A Teacher</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Become a Teacher</DialogTitle>
+                        <DialogDescription>Share your knowledge and start earning today.</DialogDescription>
+                      </DialogHeader>
+                      <TeacherForm />
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </Card>
               <Card className="overflow-hidden card-hover">
@@ -215,7 +241,18 @@ export default function HomePage() {
                     <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Brand Visibility</li>
                     <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Impact Reporting</li>
                   </ul>
-                  <Button variant="outline" className="mt-6 w-full">Become a Sponsor</Button>
+                   <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="mt-6 w-full">Become a Sponsor</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Become a Sponsor</DialogTitle>
+                        <DialogDescription>Make an impact and empower the next generation of learners.</DialogDescription>
+                      </DialogHeader>
+                      <SponsorForm />
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </Card>
             </div>
