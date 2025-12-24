@@ -40,6 +40,15 @@ interface ChatMessage {
     createdAt: any;
 }
 
+interface StreamWithId {
+  id: string;
+  stream: MediaStream;
+  user: {
+    id: string;
+    name: string;
+  };
+}
+
 const servers = {
   iceServers: [
     {
@@ -57,7 +66,7 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
   const [pc] = useState(new RTCPeerConnection(servers));
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStreams, setRemoteStreams] = useState<MediaStream[]>([]);
+  const [remoteStreams, setRemoteStreams] = useState<StreamWithId[]>([]);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -66,26 +75,22 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [participants, setParticipants] = useState<UserProfile[]>([]);
-
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const screenTrackRef = useRef<MediaStreamTrack | null>(null);
   
-  const handleJoinLeaveNotifications = useCallback((newParticipantsList: UserProfile[], currentParticipants: UserProfile[]) => {
-    if (!user) return;
-    const currentIds = new Set(currentParticipants.map(p => p.id));
-    const newIds = new Set(newParticipantsList.map(p => p.id));
+  const screenTrackRef = useRef<MediaStreamTrack | null>(null);
 
-    const joined = newParticipantsList.filter(p => !currentIds.has(p.id) && p.id !== user.uid);
-    const left = currentParticipants.filter(p => !newIds.has(p.id) && p.id !== user.uid);
+  const allStreams = localStream ? [{ id: 'local', stream: localStream, user: { id: user!.uid, name: `${user!.displayName} (You)`} }, ...remoteStreams] : remoteStreams;
 
-    joined.forEach(p => {
-      toast({ title: `${p.name || 'A user'} has joined.` });
-    });
-
-    left.forEach(p => {
-      toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" });
-    });
-  }, [toast, user]);
+  const handleJoinLeaveNotifications = useCallback((newParticipants: UserProfile[], oldParticipants: UserProfile[]) => {
+      if (!user) return;
+  
+      const oldIds = new Set(oldParticipants.map(p => p.id));
+      const newIds = new Set(newParticipants.map(p => p.id));
+  
+      const joined = newParticipants.filter(p => !oldIds.has(p.id) && p.id !== user.uid);
+      const left = oldParticipants.filter(p => !newIds.has(p.id) && p.id !== user.uid);
+  
+      return { joined, left };
+  }, [user]);
 
   useEffect(() => {
     if (!firestore || !user) return;
@@ -122,7 +127,14 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
         });
 
         setParticipants(currentParticipants => {
-            handleJoinLeaveNotifications(newParticipantsList, currentParticipants);
+            const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, currentParticipants);
+            
+            // Perform side-effects after state update
+            setTimeout(() => {
+                joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
+                left.forEach(p => toast({ title: `${p.name || 'A user'} has left.`, variant: "destructive" }));
+            }, 0);
+            
             return newParticipantsList;
         });
     });
@@ -143,9 +155,6 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setLocalStream(stream);
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
         stream.getTracks().forEach(track => {
           pc.addTrack(track, stream);
         });
@@ -190,9 +199,12 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       });
       
       pc.ontrack = (event) => {
+        const stream = event.streams[0];
         setRemoteStreams(prev => {
-            if(prev.find(s => s.id === event.streams[0].id)) return prev;
-            return [...prev, event.streams[0]]
+            if(prev.find(s => s.id === stream.id)) return prev;
+            // A placeholder until we get the actual user info
+            const participantUser = { id: stream.id, name: 'Participant' };
+            return [...prev, { id: stream.id, stream, user: participantUser }];
         });
       };
     };
@@ -252,15 +264,21 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
         try {
             const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const screenTrack = screenStream.getVideoTracks()[0];
-            screenTrackRef.current = screenTrack;
-            
+            screenTrackRef.current = videoSender.track; // Save original camera track
             videoSender.replaceTrack(screenTrack);
+            
+            // Also update the local stream to show the screen share
+            const newLocalStream = new MediaStream([screenTrack, ...localStream.getAudioTracks()]);
+            setLocalStream(newLocalStream);
+
             setIsScreenSharing(true);
 
             screenTrack.onended = () => {
-                const cameraTrack = localStream.getVideoTracks()[0];
-                if (cameraTrack) {
-                    videoSender.replaceTrack(cameraTrack);
+                if (screenTrackRef.current) {
+                    videoSender.replaceTrack(screenTrackRef.current);
+                    const newStream = new MediaStream([screenTrackRef.current, ...localStream.getAudioTracks()]);
+                    setLocalStream(newStream);
+                    screenTrackRef.current = null;
                 }
                 setIsScreenSharing(false);
             };
@@ -268,11 +286,12 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
             console.error("Screen share failed: ", err);
         }
     } else {
-        const cameraTrack = localStream.getVideoTracks()[0];
-        if (cameraTrack) {
-            videoSender.replaceTrack(cameraTrack);
+        if (screenTrackRef.current) {
+            videoSender.replaceTrack(screenTrackRef.current);
+            const newStream = new MediaStream([screenTrackRef.current, ...localStream.getAudioTracks()]);
+            setLocalStream(newStream);
+            screenTrackRef.current = null;
         }
-        screenTrackRef.current?.stop();
         setIsScreenSharing(false);
     }
 };
@@ -299,9 +318,8 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
     router.push('/dashboard/live-classes');
   };
 
-  const allStreamsCount = remoteStreams.length + (localStream ? 1 : 0);
-  const gridCols = `grid-cols-${Math.min(Math.ceil(Math.sqrt(allStreamsCount)), 4)}`;
-  const gridRows = `grid-rows-${Math.min(Math.ceil(allStreamsCount / Math.ceil(Math.sqrt(allStreamsCount))), 4)}`;
+  const gridCols = `grid-cols-${Math.min(Math.ceil(Math.sqrt(allStreams.length)), 4)}`;
+  const gridRows = `grid-rows-${Math.min(Math.ceil(allStreams.length / Math.ceil(Math.sqrt(allStreams.length))), 4)}`;
 
 
   return (
@@ -309,16 +327,16 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
       <div className="flex-1 flex flex-col relative transition-all duration-300" style={{ marginRight: (isChatOpen || isParticipantsOpen) ? '320px' : '0' }}>
         <div className="flex-1 overflow-auto p-2">
             <div className={cn('grid gap-2 h-full w-full', gridCols, gridRows)}>
-                {localStream && (
-                    <div className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
-                        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
-                    </div>
-                )}
-                {remoteStreams.map((stream, index) => (
-                    <div key={index} className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
-                        <video ref={el => { if (el) el.srcObject = stream; }} autoPlay playsInline className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">Participant {index+1}</div>
+                {allStreams.map(({ id, stream, user: streamUser }) => (
+                    <div key={id} className="relative bg-gray-900 rounded-md overflow-hidden aspect-video">
+                        <video 
+                          ref={el => { if (el) el.srcObject = stream; }}
+                          autoPlay 
+                          playsInline 
+                          muted={id === 'local'}
+                          className="w-full h-full object-cover" 
+                        />
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{streamUser.name}</div>
                     </div>
                 ))}
             </div>
@@ -366,7 +384,7 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
                         <div key={p.id} className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
                                 <AvatarImage src={p.avatar} />
-                                <AvatarFallback>{p.name?.charAt(0) || 'U'}</AvatarFallback>
+                                <AvatarFallback>{p.name ? p.name.charAt(0) : 'U'}</AvatarFallback>
                             </Avatar>
                             <span className="font-medium">{p.name || 'Anonymous User'} {p.id === user?.uid ? '(You)' : ''}</span>
                         </div>
