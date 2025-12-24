@@ -101,56 +101,6 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
           <Link href={user ? '/dashboard' : '/'}>
             <Logo size="md" />
           </Link>
-           {user && userProfile && (
-            <div className="hidden lg:flex">
-              {/* Profile */}
-              <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                  <Button
-                      variant="ghost"
-                      className="btn-touch-target flex items-center gap-2 px-2"
-                      aria-label="User menu"
-                  >
-                      {user.photoURL ? <Image
-                        src={user.photoURL}
-                        alt={user.displayName || 'User Avatar'}
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20"
-                      /> : <User className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20 p-1"/>}
-                      <span className="hidden lg:block font-medium">{user.displayName}</span>
-                      <ChevronDown className="h-4 w-4 hidden lg:block" />
-                  </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56 bg-popover">
-                  <DropdownMenuLabel>
-                      <div className="flex flex-col">
-                      <span>{user.displayName}</span>
-                      <span className="text-sm font-normal text-muted-foreground">{user.email}</span>
-                      </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
-                    <Link href="/dashboard/profile">
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
-                    <Link href="/dashboard/settings">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer btn-touch-target text-destructive" onClick={() => signOut()}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Log out
-                  </DropdownMenuItem>
-                  </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
         </div>
 
         {user && userProfile && (
@@ -279,53 +229,52 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                     </PopoverContent>
                 </Popover>
 
-                {/* Profile dropdown for mobile */}
-                <div className="lg:hidden">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="btn-touch-target"
-                                aria-label="User menu"
-                            >
-                                {user.photoURL ? <Image
-                                src={user.photoURL}
-                                alt={user.displayName || 'User Avatar'}
-                                width={32}
-                                height={32}
-                                className="h-8 w-8 rounded-full object-cover"
-                                /> : <User className="h-8 w-8 rounded-full p-1"/>}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 bg-popover">
-                        <DropdownMenuLabel>
-                            <div className="flex flex-col">
-                            <span>{user.displayName}</span>
-                            <span className="text-sm font-normal text-muted-foreground">{user.email}</span>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                         <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
-                            <Link href="/dashboard/profile">
-                                <User className="h-4 w-4 mr-2" />
-                                Profile
-                            </Link>
-                        </DropdownMenuItem>
+                {/* Profile dropdown for all screen sizes */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            className="btn-touch-target flex items-center gap-2 px-2"
+                            aria-label="User menu"
+                        >
+                            {user.photoURL ? <Image
+                            src={user.photoURL}
+                            alt={user.displayName || 'User Avatar'}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20"
+                            /> : <User className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20 p-1"/>}
+                            <span className="hidden lg:block font-medium">{user.displayName}</span>
+                            <ChevronDown className="h-4 w-4 hidden lg:block" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 bg-popover">
+                    <DropdownMenuLabel>
+                        <div className="flex flex-col">
+                        <span>{user.displayName}</span>
+                        <span className="text-sm font-normal text-muted-foreground">{user.email}</span>
+                        </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                         <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
-                            <Link href="/dashboard/settings">
-                                <Settings className="h-4 w-4 mr-2" />
-                                Settings
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer btn-touch-target text-destructive" onClick={() => signOut()}>
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Log out
-                        </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                        <Link href="/dashboard/profile">
+                            <User className="h-4 w-4 mr-2" />
+                            Profile
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
+                        <Link href="/dashboard/settings">
+                            <Settings className="h-4 w-4 mr-2" />
+                            Settings
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer btn-touch-target text-destructive" onClick={() => signOut()}>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Log out
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 </div>
             </>
         )}
@@ -335,5 +284,3 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
 };
 
 export default Navbar;
-
-    
