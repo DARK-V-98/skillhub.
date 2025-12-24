@@ -79,7 +79,7 @@ const StudentDashboard: React.FC = () => {
       )}
 
       {/* My Courses Section */}
-      <section aria-labelledby="my-courses-heading">
+      <section aria_labelledby="my-courses-heading">
         <div className="flex items-center justify-between mb-4">
           <h2 id="my-courses-heading" className="text-xl font-semibold text-foreground">
             My Courses
