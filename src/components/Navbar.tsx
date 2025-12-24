@@ -1,5 +1,3 @@
-
-
 'use client';
 import React, { useState } from 'react';
 import { 
@@ -102,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
             <Logo size="md" />
           </Link>
         </div>
-
+        
         {/* Center and Right section, only shows when user is logged in */}
         {user && (
           <>
