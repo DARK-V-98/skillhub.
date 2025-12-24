@@ -30,13 +30,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useRole } from '@/contexts/RoleContext';
-import { UserRole } from '@/lib/types';
-import { notifications } from '@/lib/mockData';
+import { UserRole, Notification } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
 import { signOut } from '@/firebase/auth';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, query, where } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/provider';
 
 interface NavbarProps {
   isMobileSidebarOpen: boolean;
@@ -65,8 +67,11 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
   const { currentRole, setCurrentRole } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useUser();
+  const firestore = useFirestore();
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const notificationsQuery = user ? query(collection(firestore, `users/${user.uid}/notifications`)) : null;
+  const { data: notifications } = useCollection<Notification>(notificationsQuery);
+  const unreadCount = notifications?.filter(n => !n.read).length || 0;
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-background/95 backdrop-blur border-b border-border z-50">
@@ -172,7 +177,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                         <h3 className="font-semibold">Notifications</h3>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
-                        {notifications.map((notification) => (
+                        {notifications?.map((notification) => (
                         <div
                             key={notification.id}
                             className={cn(
@@ -201,6 +206,9 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                             </div>
                         </div>
                         ))}
+                         {!notifications || notifications.length === 0 && (
+                            <p className="text-center text-sm text-muted-foreground p-8">No notifications yet.</p>
+                         )}
                     </div>
                     <div className="p-3 border-t border-border">
                         <Button variant="ghost" className="w-full btn-touch-target text-primary">

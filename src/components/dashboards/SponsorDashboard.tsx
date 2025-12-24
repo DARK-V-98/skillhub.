@@ -12,7 +12,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
-import { sponsorStats, scholarships } from '@/lib/mockData';
+import { sponsorStats } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,9 +27,28 @@ import {
   Legend,
 } from 'recharts';
 import Image from 'next/image';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, query } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/provider';
+import { Scholarship } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 const SponsorDashboard: React.FC = () => {
-  const budgetPercentage = Math.round((sponsorStats.budgetUsed / sponsorStats.totalBudget) * 100);
+    const firestore = useFirestore();
+    const { data: scholarships, loading } = useCollection<Scholarship>(
+        firestore ? query(collection(firestore, 'scholarships')) : null
+    );
+
+    const totalBeneficiaries = React.useMemo(() => scholarships?.reduce((acc, s) => acc + s.beneficiaries, 0) || 0, [scholarships]);
+    const totalBudget = React.useMemo(() => scholarships?.reduce((acc, s) => acc + s.amount, 0) || 0, [scholarships]);
+    
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
+    }
 
   return (
     <div className="space-y-8">
@@ -55,26 +74,23 @@ const SponsorDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Scholarships Funded"
-          value={sponsorStats.scholarshipsFunded}
+          value={scholarships?.length || 0}
           icon={GraduationCap}
-          change={{ value: 1, positive: true }}
         />
         <StatCard
           title="Students Helped"
-          value={sponsorStats.studentsHelped.toLocaleString()}
+          value={totalBeneficiaries.toLocaleString()}
           icon={Users}
-          change={{ value: 28, positive: true }}
         />
         <StatCard
           title="Budget Allocated"
-          value={`$${sponsorStats.totalBudget.toLocaleString()}`}
+          value={`$${totalBudget.toLocaleString()}`}
           icon={DollarSign}
         />
         <StatCard
-          title="Impact Score"
+          title="Impact Score (Demo)"
           value={`${sponsorStats.impactScore}/100`}
           icon={Heart}
-          change={{ value: 5, positive: true }}
         />
       </div>
 
@@ -85,7 +101,7 @@ const SponsorDashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Impact Over Time
+              Impact Over Time (Demo)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -128,41 +144,16 @@ const SponsorDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Budget Allocation */}
+        {/* Placeholder for Budget Allocation */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-primary" />
-              Budget Allocation
+              Budget Overview
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center p-6 bg-accent rounded-xl">
-              <p className="text-4xl font-bold text-foreground">
-                ${sponsorStats.budgetUsed.toLocaleString()}
-              </p>
-              <p className="text-muted-foreground">
-                of ${sponsorStats.totalBudget.toLocaleString()} used
-              </p>
-              <div className="mt-4 progress-bar h-3">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${budgetPercentage}%` }}
-                />
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">{budgetPercentage}% allocated</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">CSR Rating</p>
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{sponsorStats.csrRating}</p>
-              </div>
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">Avg. Course Completion</p>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-500">78%</p>
-              </div>
-            </div>
+          <CardContent className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Budget allocation chart coming soon.</p>
           </CardContent>
         </Card>
       </div>
@@ -176,7 +167,7 @@ const SponsorDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid gap-4">
-          {scholarships.map((scholarship) => (
+          {scholarships?.map((scholarship) => (
             <Card key={scholarship.id} className="card-hover">
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -216,53 +207,6 @@ const SponsorDashboard: React.FC = () => {
                       <FileText className="h-4 w-4 mr-1" />
                       Report
                     </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Recent Beneficiaries */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-foreground">Recent Beneficiaries</h2>
-          <Button variant="ghost" className="text-primary">
-            View All
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { name: 'Maria Santos', course: 'Web Development', progress: 85, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face' },
-            { name: 'James Wilson', course: 'Data Science', progress: 62, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
-            { name: 'Lisa Chen', course: 'UI/UX Design', progress: 94, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face' },
-          ].map((student, index) => (
-            <Card key={index} className="card-hover">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src={student.avatar}
-                    alt={student.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">{student.name}</p>
-                    <p className="text-sm text-muted-foreground">{student.course}</p>
-                  </div>
-                </div>
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium text-primary">{student.progress}%</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${student.progress}%` }}
-                    />
                   </div>
                 </div>
               </CardContent>

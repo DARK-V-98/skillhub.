@@ -8,7 +8,7 @@
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
                 "avatar": { "type": "string", "format": "uri" },
-                "role": { "type": "string", "enum": ["student", "teacher", "sponsor", "admin"] },
+                "role": { "type": "string", "enum": ["student", "teacher", "sponsor", "admin", "developer"] },
                 "postCount": { "type": "number" },
                 "commentCount": { "type": "number" }
             },
@@ -21,6 +21,7 @@
             "properties": {
                 "title": { "type": "string" },
                 "instructor": { "type": "string" },
+                "instructorId": { "type": "string" },
                 "instructorAvatar": { "type": "string", "format": "uri" },
                 "thumbnail": { "type": "string", "format": "uri" },
                 "rating": { "type": "number" },
@@ -33,7 +34,7 @@
                 "description": { "type": "string" },
                 "lessonsCount": { "type": "number" }
             },
-            "required": ["title", "instructor", "thumbnail", "price", "level"]
+            "required": ["title", "instructor", "instructorId", "thumbnail", "price", "level"]
         },
         "liveClass": {
             "title": "Live Class",
@@ -119,6 +120,20 @@
                 "direction": { "type": "string", "enum": ["up", "down"] }
             },
             "required": ["userId", "refId", "refType", "direction"]
+        },
+        "notification": {
+            "title": "Notification",
+            "description": "Represents a user notification.",
+            "type": "object",
+            "properties": {
+                "title": { "type": "string" },
+                "message": { "type": "string" },
+                "type": { "type": "string", "enum": ["info", "success", "warning", "class"] },
+                "timestamp": { "type": "string", "format": "date-time" },
+                "read": { "type": "boolean" },
+                "userId": { "type": "string" }
+            },
+            "required": ["title", "message", "type", "timestamp", "userId"]
         }
     },
     "auth": {
@@ -144,6 +159,10 @@
         "/users/{userId}/achievements": {
             "schema": { "$ref": "#/entities/achievement" },
             "description": "Sub-collection of achievements for a specific user."
+        },
+        "/users/{userId}/notifications": {
+            "schema": { "$ref": "#/entities/notification" },
+            "description": "Sub-collection of notifications for a specific user."
         },
         "/communityPosts": {
             "schema": { "$ref": "#/entities/communityPost" },

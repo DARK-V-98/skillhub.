@@ -15,6 +15,7 @@ export interface Course {
   id: string;
   title: string;
   instructor: string;
+  instructorId: string;
   instructorAvatar: string;
   thumbnail: string;
   rating: number;

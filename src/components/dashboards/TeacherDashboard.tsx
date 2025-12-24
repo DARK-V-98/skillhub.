@@ -27,17 +27,26 @@ import {
 } from 'recharts';
 import Image from 'next/image';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { Course } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import { useUser } from '@/firebase/auth/use-user';
 
 const TeacherDashboard: React.FC = () => {
     const firestore = useFirestore();
+    const { user } = useUser();
 
-    const { data: myCourses, loading: coursesLoading } = useCollection<Course>(
-        firestore ? query(collection(firestore, 'courses')) : null
-    );
+    const coursesQuery = user ? query(collection(firestore, 'courses'), where('instructorId', '==', user.uid)) : null;
+    const { data: myCourses, loading: coursesLoading } = useCollection<Course>(coursesQuery);
+
+    const totalStudents = React.useMemo(() => myCourses?.reduce((acc, course) => acc + course.students, 0) || 0, [myCourses]);
+    const courseRevenue = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (course.price * course.students), 0) || 0, [myCourses]);
+    const averageRating = React.useMemo(() => {
+        if (!myCourses || myCourses.length === 0) return 0;
+        const totalRating = myCourses.reduce((acc, course) => acc + course.rating, 0);
+        return (totalRating / myCourses.length).toFixed(2);
+    }, [myCourses]);
 
     if (coursesLoading) {
         return (
@@ -46,7 +55,6 @@ const TeacherDashboard: React.FC = () => {
           </div>
         );
     }
-
 
   return (
     <div className="space-y-8">
@@ -72,21 +80,18 @@ const TeacherDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Students"
-          value={teacherStats.totalStudents.toLocaleString()}
+          value={totalStudents.toLocaleString()}
           icon={Users}
-          change={{ value: 12, positive: true }}
         />
         <StatCard
           title="Course Revenue"
-          value={`$${teacherStats.courseRevenue.toLocaleString()}`}
+          value={`$${courseRevenue.toLocaleString()}`}
           icon={DollarSign}
-          change={{ value: 18, positive: true }}
         />
         <StatCard
           title="Average Rating"
-          value={teacherStats.averageRating.toString()}
+          value={averageRating}
           icon={Star}
-          change={{ value: 2, positive: true }}
         />
         <StatCard
           title="Active Courses"
@@ -102,7 +107,7 @@ const TeacherDashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Monthly Earnings
+              Monthly Earnings (Demo)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -144,7 +149,7 @@ const TeacherDashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" />
-              Performance Metrics
+              Performance Metrics (Demo)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -220,7 +225,7 @@ const TeacherDashboard: React.FC = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <DollarSign className="h-4 w-4" />
-                        ${(course.students * course.price * 0.7).toLocaleString()} earned
+                        ${(course.students * course.price).toLocaleString()} earned
                       </span>
                     </div>
                   </div>
