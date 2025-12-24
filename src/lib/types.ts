@@ -126,5 +126,3 @@ export interface StudyRoom {
     createdAt: any; // ServerTimestamp
     participantCount: number;
 }
-
-    

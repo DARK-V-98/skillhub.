@@ -38,6 +38,7 @@ const teacherNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
   { id: 'create-course', label: 'Create Course', icon: PlusCircle, href: '/dashboard/create-course' },
   { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
+  { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/teacher/live-classes' },
   { id: 'students', label: 'Students', icon: Users, href: '/dashboard/students' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/dashboard/analytics' },
   { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
