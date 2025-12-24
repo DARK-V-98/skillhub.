@@ -56,6 +56,7 @@ const roleLabels: Record<UserRole, string> = {
   sponsor: 'Sponsor',
   admin: 'Admin',
   developer: 'Developer',
+  user: 'User',
 };
 
 const roleColors: Record<UserRole, string> = {
@@ -64,10 +65,11 @@ const roleColors: Record<UserRole, string> = {
   sponsor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   admin: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   developer: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+  user: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
 };
 
 const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkModeToggle }) => {
-  const { setCurrentRole } = useRole();
+  const { currentRole, setCurrentRole } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useUser();
   const firestore = useFirestore();
@@ -75,7 +77,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
   const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-  const currentRole = userProfile?.role ?? 'student';
+  const activeRole = userProfile?.role === 'developer' ? currentRole : userProfile?.role || 'user';
 
   const notificationsQuery = user ? query(collection(firestore, `users/${user.uid}/notifications`), orderBy('timestamp', 'desc')) : null;
   const { data: notifications } = useCollection<Notification>(notificationsQuery);
@@ -127,8 +129,8 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 btn-touch-target">
-                      <Badge className={cn('font-normal', roleColors[currentRole])}>
-                        {roleLabels[currentRole]}
+                      <Badge className={cn('font-normal', roleColors[activeRole])}>
+                        {roleLabels[activeRole]}
                       </Badge>
                       <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -136,14 +138,15 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                   <DropdownMenuContent align="end" className="w-48 bg-popover">
                     <DropdownMenuLabel>Switch Role (Developer)</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {(Object.keys(roleLabels) as UserRole[]).map((role) => (
+                    {(Object.keys(roleLabels).filter(r => r !== 'user') as UserRole[]).map((role) => (
                       <DropdownMenuItem
                         key={role}
                         onClick={() => setCurrentRole(role)}
-                        className={cn('cursor-pointer btn-touch-target', currentRole === role && 'bg-accent')}
+                        className={cn('cursor-pointer btn-touch-target', activeRole === role && 'bg-accent')}
                       >
-                        <Badge className={cn('mr-2', roleColors[role])}>{roleLabels[role]}</Badge>
-                        {roleLabels[role]}
+                        <Badge className={cn('mr-2 font-normal', roleColors[role])}>{roleLabels[role]}</Badge>
+                        <span className="flex-grow">{roleLabels[role]}</span>
+                        {activeRole === role && <span className="ml-2">✓</span>}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>

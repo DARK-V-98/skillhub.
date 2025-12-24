@@ -25,17 +25,19 @@ const DashboardPage: React.FC = () => {
 
     React.useEffect(() => {
         if (!profileLoading && userProfile) {
+            // Set the base role from Firestore. If the user is a dev,
+            // the `currentRole` from context will be used for rendering.
             if (userProfile.role) {
                 setCurrentRole(userProfile.role);
-                if (userProfile.role === 'user') {
-                    router.push('/dashboard/onboarding');
-                }
+            }
+            if (userProfile.role === 'user') {
+                router.push('/dashboard/onboarding');
             }
         }
     }, [userProfile, profileLoading, setCurrentRole, router]);
 
     const renderDashboard = () => {
-      // Prioritize role from the developer context if it's set, otherwise use the profile role.
+      // If the real role is developer, use the role from context. Otherwise, use the real role.
       const roleToRender = userProfile?.role === 'developer' ? currentRole : userProfile?.role;
     
       switch (roleToRender) {
