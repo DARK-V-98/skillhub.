@@ -23,37 +23,27 @@ const DashboardPage: React.FC = () => {
     const { data: userProfile, loading: userProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
     React.useEffect(() => {
-        if(userProfile && userProfile.role) {
+        if(userProfile?.role) {
+            // Set the initial role based on the user's profile.
+            // A developer can then change it via the UI.
             setCurrentRole(userProfile.role);
         }
     },[userProfile, setCurrentRole]);
 
     const renderDashboard = () => {
-      // The developer can see all dashboards
-      if(userProfile?.role === 'developer'){
-        switch (currentRole) {
-          case 'student':
-            return <StudentDashboard />;
-          case 'teacher':
-            return <TeacherDashboard />;
-          case 'sponsor':
-            return <SponsorDashboard />;
-          case 'admin':
-            return <AdminDashboard />;
-          default:
-            return <StudentDashboard />;
-        }
-      }
+      const roleToRender = userProfile?.role === 'developer' ? currentRole : userProfile?.role;
 
-      // Other roles see their own dashboard
-      switch (userProfile?.role) {
+      switch (roleToRender) {
+        case 'student':
+          return <StudentDashboard />;
         case 'teacher':
           return <TeacherDashboard />;
         case 'sponsor':
           return <SponsorDashboard />;
         case 'admin':
           return <AdminDashboard />;
-        case 'student':
+        // The developer's default view is the student dashboard.
+        case 'developer':
         default:
           return <StudentDashboard />;
       }
