@@ -17,35 +17,36 @@ import AchievementCard from '@/components/AchievementCard';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase/auth/use-user';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, limit } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { Course, LiveClass, Achievement } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 const StudentDashboard: React.FC = () => {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const { data: enrolledCourses, loading: enrolledCoursesLoading } = useCollection<Course>(
-    firestore ? query(collection(firestore, 'courses'), where('progress', '!=', null)) : null
-  );
+  const enrolledCoursesQuery = firestore ? query(collection(firestore, 'courses'), where('students', 'array-contains', user?.uid), limit(3)) : null;
+  const { data: enrolledCourses, loading: enrolledCoursesLoading } = useCollection<Course>(enrolledCoursesQuery);
 
-  const { data: recommendedCourses, loading: recommendedCoursesLoading } = useCollection<Course>(
-    firestore ? query(collection(firestore, 'courses'), where('progress', '==', null)) : null
-  );
-
-  const { data: liveClasses, loading: liveClassesLoading } = useCollection<LiveClass>(
-    firestore ? collection(firestore, 'liveClasses') : null
-  );
+  const recommendedCoursesQuery = firestore ? query(collection(firestore, 'courses'), limit(4)) : null;
+  const { data: recommendedCourses, loading: recommendedCoursesLoading } = useCollection<Course>(recommendedCoursesQuery);
   
-  const achievementsQuery = user && firestore ? query(collection(firestore, 'users', user.uid, 'achievements')) : null;
+  const liveClassesQuery = firestore ? query(collection(firestore, 'liveClasses'), orderBy('startTime', 'asc')) : null;
+  const { data: liveClasses, loading: liveClassesLoading } = useCollection<LiveClass>(liveClassesQuery);
+  
+  const achievementsQuery = user && firestore ? query(collection(firestore, 'users', user.uid, 'achievements'), limit(2)) : null;
   const { data: achievements, loading: achievementsLoading } = useCollection<Achievement>(achievementsQuery);
 
 
   const upcomingClasses = liveClasses?.filter(c => new Date(c.startTime) > new Date()).slice(0, 2) || [];
-  const liveNow = liveClasses?.filter(c => new Date(c.startTime) <= new Date() && c.isLive) || [];
+  const liveNow = liveClasses?.filter(c => new Date(c.startTime) <= new Date() && new Date(c.startTime).getTime() + c.duration * 60000 > Date.now()) || [];
 
   const isLoading = enrolledCoursesLoading || recommendedCoursesLoading || liveClassesLoading || achievementsLoading;
+
+  const totalEnrolled = enrolledCourses?.length || 0;
+  const totalAchievements = achievements?.length || 0;
 
   if (isLoading) {
     return (
@@ -73,13 +74,13 @@ const StudentDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Active Courses"
-          value={enrolledCourses?.length || 0}
+          value={totalEnrolled}
           icon={BookOpen}
           change={{ value: 2, positive: true }}
         />
         <StatCard
           title="Achievements"
-          value={achievements?.length || 0}
+          value={totalAchievements}
           icon={Trophy}
           change={{ value: 1, positive: true }}
         />
@@ -101,14 +102,19 @@ const StudentDashboard: React.FC = () => {
       {liveNow.length > 0 && (
         <section aria-labelledby="live-classes-heading">
           <div className="flex items-center gap-2 mb-4">
-            <span className="h-3 w-3 rounded-full bg-destructive animate-pulse-soft" />
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+            </span>
             <h2 id="live-classes-heading" className="text-xl font-semibold text-foreground">
               Live Now
             </h2>
           </div>
           <div className="grid gap-4">
             {liveNow.map((liveClass) => (
-              <LiveClassCard key={liveClass.id} liveClass={liveClass} />
+              <Link key={liveClass.id} href={`/dashboard/live/${liveClass.id}`}>
+                <LiveClassCard liveClass={liveClass} />
+              </Link>
             ))}
           </div>
         </section>
@@ -120,12 +126,12 @@ const StudentDashboard: React.FC = () => {
           <h2 id="my-courses-heading" className="text-xl font-semibold text-foreground">
             My Courses
           </h2>
-          <Button variant="ghost" className="text-primary">
-            View All
+          <Button variant="ghost" className="text-primary" asChild>
+            <Link href="/dashboard/my-courses">View All</Link>
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(enrolledCourses || []).slice(0, 3).map((course) => (
+          {(enrolledCourses || []).map((course) => (
             <CourseCard
               key={course.id}
               course={course}
@@ -134,6 +140,11 @@ const StudentDashboard: React.FC = () => {
             />
           ))}
         </div>
+        {!enrolledCoursesLoading && enrolledCourses?.length === 0 && (
+          <div className="text-center py-12 border-2 border-dashed rounded-lg">
+            <h3 className="text-lg font-medium">You are not enrolled in any courses yet.</h3>
+          </div>
+        )}
       </section>
 
       {/* Upcoming Classes Section */}
@@ -143,14 +154,21 @@ const StudentDashboard: React.FC = () => {
             <Calendar className="h-5 w-5 text-primary" />
             Upcoming Classes
           </h2>
-          <Button variant="ghost" className="text-primary">
-            View Calendar
+          <Button variant="ghost" className="text-primary" asChild>
+            <Link href="/dashboard/live-classes">View Calendar</Link>
           </Button>
         </div>
         <div className="grid gap-4">
           {upcomingClasses.map((liveClass) => (
-            <LiveClassCard key={liveClass.id} liveClass={liveClass} />
+            <Link key={liveClass.id} href={`/dashboard/live/${liveClass.id}`}>
+                <LiveClassCard liveClass={liveClass} />
+            </Link>
           ))}
+           {!liveClassesLoading && upcomingClasses?.length === 0 && (
+          <div className="text-center py-12 border-2 border-dashed rounded-lg">
+            <h3 className="text-lg font-medium">No upcoming classes.</h3>
+          </div>
+        )}
         </div>
       </section>
 
@@ -166,13 +184,18 @@ const StudentDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(achievements || []).slice(0, 2).map((achievement) => (
+          {(achievements || []).map((achievement) => (
             <AchievementCard
               key={achievement.id}
               achievement={achievement}
               onDownload={() => console.log('Download certificate:', achievement.id)}
             />
           ))}
+           {!achievementsLoading && achievements?.length === 0 && (
+          <div className="text-center py-12 border-2 border-dashed rounded-lg md:col-span-2">
+            <h3 className="text-lg font-medium">No achievements yet. Keep learning!</h3>
+          </div>
+        )}
         </div>
       </section>
 
@@ -188,7 +211,7 @@ const StudentDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {(recommendedCourses || []).slice(0, 4).map((course) => (
+          {(recommendedCourses || []).map((course) => (
             <CourseCard
               key={course.id}
               course={course}

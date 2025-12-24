@@ -30,6 +30,8 @@ const DashboardPage: React.FC = () => {
 
     const renderDashboard = () => {
       const roleToRender = userProfile?.role === 'developer' ? currentRole : userProfile?.role;
+    
+      if (!userProfile) return null;
 
       switch (roleToRender) {
         case 'student':
