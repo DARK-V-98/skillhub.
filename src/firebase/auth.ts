@@ -32,7 +32,7 @@ export const signInWithGoogle = async (): Promise<User> => {
           name: user.displayName,
           email: user.email,
           avatar: user.photoURL,
-          role: 'student' // Default role for new Google sign-in
+          role: 'user' // Default role for new Google sign-in
       }, { merge: true });
     }
     
@@ -55,7 +55,7 @@ export const signUpWithEmailAndPassword = async (email: string, password: string
         name: user.email?.split('@')[0] || 'New User',
         email: user.email,
         avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
-        role: 'student' // Default role for new sign-ups
+        role: 'user' // Default role for new sign-ups
     }, { merge: true });
 
     return user;

@@ -9,7 +9,7 @@
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
                 "avatar": { "type": "string", "format": "uri" },
-                "role": { "type": "string", "enum": ["student", "teacher", "sponsor", "admin", "developer"] },
+                "role": { "type": "string", "enum": ["user", "student", "teacher", "sponsor", "admin", "developer"] },
                 "postCount": { "type": "number" },
                 "commentCount": { "type": "number" }
             },

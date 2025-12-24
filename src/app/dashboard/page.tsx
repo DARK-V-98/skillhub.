@@ -12,23 +12,30 @@ import { useFirestore } from '@/firebase/provider';
 import { doc } from 'firebase/firestore';
 import { UserProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const DashboardPage: React.FC = () => {
     const { currentRole, setCurrentRole } = useRole();
     const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
+    const router = useRouter();
   
     const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
     const { data: userProfile, loading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
     React.useEffect(() => {
-        if (userProfile?.role) {
-            setCurrentRole(userProfile.role);
+        if (!profileLoading && userProfile) {
+            if (userProfile.role) {
+                setCurrentRole(userProfile.role);
+                if (userProfile.role === 'user') {
+                    router.push('/dashboard/onboarding');
+                }
+            }
         }
-    }, [userProfile, setCurrentRole]);
+    }, [userProfile, profileLoading, setCurrentRole, router]);
 
     const renderDashboard = () => {
-      // Determine which role to render. If the stored role is 'developer', use the one from context, otherwise use the stored one.
+      // Prioritize role from the developer context if it's set, otherwise use the profile role.
       const roleToRender = userProfile?.role === 'developer' ? currentRole : userProfile?.role;
     
       switch (roleToRender) {
@@ -39,6 +46,9 @@ const DashboardPage: React.FC = () => {
         case 'admin':
           return <AdminDashboard />;
         case 'student':
+          return <StudentDashboard />;
+        case 'user': // For users who haven't selected a role yet
+          return null; // They will be redirected, but good to have a case
         default:
           return <StudentDashboard />;
       }
@@ -57,6 +67,15 @@ const DashboardPage: React.FC = () => {
     // as the layout should handle the redirect.
     if (!user) {
         return null;
+    }
+
+    // Don't render a dashboard for users who are being redirected
+    if (userProfile?.role === 'user') {
+        return (
+            <div className="flex items-center justify-center h-[calc(100vh-20rem)]">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
     }
 
     return (

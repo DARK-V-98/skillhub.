@@ -1,5 +1,5 @@
 'use client';
-export type UserRole = 'student' | 'teacher' | 'sponsor' | 'admin' | 'developer';
+export type UserRole = 'user' | 'student' | 'teacher' | 'sponsor' | 'admin' | 'developer';
 
 export interface UserProfile {
   id: string;
