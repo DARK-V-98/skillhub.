@@ -1,0 +1,104 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function getRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+
+    function isRole(userId, role) {
+      return getRole(userId) == role;
+    }
+    
+    function isOneOfRoles(userId, roles) {
+      let userRole = getRole(userId);
+      return userRole in roles;
+    }
+
+    match /users/{userId} {
+      allow read;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+    }
+    
+    match /courses/{courseId} {
+      allow read;
+      allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+    }
+
+    match /liveClasses/{classId} {
+        allow read;
+        allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+    }
+
+    match /liveClasses/{classId}/messages/{messageId} {
+        allow read, create: if isSignedIn();
+    }
+    
+    match /liveClasses/{classId}/calls/{callId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    match /liveClasses/{classId}/participants/{participantId} {
+      allow read, create;
+      allow update: if isSignedIn() && (isOwner(participantId) || isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']));
+      allow delete: if isSignedIn() && (isOwner(participantId) || isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']));
+    }
+
+    match /users/{userId}/achievements/{achievementId} {
+        allow read: if isSignedIn() && isOwner(userId);
+        allow write: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+    }
+
+    match /communityPosts/{postId} {
+      allow read;
+      allow create: if isSignedIn();
+      allow update(diff(resource.data, request.resource.data).affectedKeys()
+                   .hasOnly(['upvotes', 'downvotes', 'commentCount', 'title', 'content']));
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']));
+    }
+
+    match /communityPosts/{postId}/comments/{commentId} {
+      allow read;
+      allow create: if isSignedIn();
+      allow update(diff(resource.data, request.resource.data).affectedKeys()
+                   .hasOnly(['upvotes', 'downvotes', 'content']));
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']));
+    }
+
+    match /votes/{voteId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /studyRooms/{roomId} {
+        allow read, create;
+        allow update: if isSignedIn();
+    }
+    
+    match /studyRooms/{roomId}/messages/{messageId} {
+        allow read, create: if isSignedIn();
+    }
+
+    match /studyRooms/{roomId}/calls/{callId} {
+      allow read, write: if isSignedIn();
+    }
+    
+     match /studyRooms/{roomId}/participants/{participantId} {
+      allow read, write: if isSignedIn();
+    }
+
+     match /studyRooms/{roomId}/{path=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

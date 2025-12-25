@@ -81,7 +81,6 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
   const isTeacher = user?.uid === liveClass.instructorId;
   const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideosRef = useRef<{[key: string]: HTMLVideoElement}>({});
 
   const allStreams = localStream ? [{ id: user!.uid, stream: localStream, user: { id: user!.uid, name: `${user!.displayName} (You)`} }, ...remoteStreams] : remoteStreams;
 
@@ -233,6 +232,7 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 
     setupMediaAndSignaling();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pc, user, firestore, liveClass.id, toast, participants]);
 
     useEffect(() => {
@@ -525,5 +525,3 @@ const LiveClassroom: React.FC<LiveClassroomProps> = ({ liveClass }) => {
 };
 
 export default LiveClassroom;
-
-    
