@@ -2,10 +2,10 @@
 "use server";
 
 import { z } from "zod";
-import { getFirestore, doc, updateDoc, arrayUnion, arrayRemove, getDoc, runTransaction, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, arrayUnion, arrayRemove, getDoc, runTransaction, collection, query, where, getDocs, writeBatch, setDoc, serverTimestamp } from "firebase/firestore";
 import { app } from "@/firebase/config";
+import { Course, CommunityVote, teacherRegistrationSchema, UserProfile } from "@/lib/types";
 import { getAuth } from "firebase/auth";
-import { Course, CommunityVote } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string(),
@@ -109,17 +109,39 @@ export async function submitSponsorInquiry(
 }
 
 
-export async function submitTeacherRegistration(data: any): Promise<FormState> {
-    console.log("New teacher registration submission:", data);
-    // In a real application, you would save this to Firestore,
-    // upload files to Cloud Storage, and trigger a review process.
-    await new Promise(resolve => setTimeout(resolve, 1500));
+export async function submitTeacherRegistration(
+    data: z.infer<typeof teacherRegistrationSchema>,
+    userId: string
+): Promise<{ success: boolean; message: string }> {
+    const firestore = getFirestore(app);
 
-    // For now, we'll just simulate a success response.
-    return {
-        success: true,
-        message: "Application submitted successfully! We'll review it and get back to you within 3-5 business days."
-    };
+    try {
+        const applicationRef = doc(firestore, 'teacherApplications', userId);
+        const userRef = doc(firestore, 'users', userId);
+
+        const applicationData = {
+            ...data,
+            userId,
+            status: 'pending',
+            submittedAt: serverTimestamp(),
+        };
+
+        await setDoc(applicationRef, applicationData);
+
+        // Also update the main user profile to indicate an application is in progress
+        await setDoc(userRef, {
+            applicationStatus: 'pending',
+            teacherApplicationId: userId,
+        }, { merge: true });
+
+        return {
+            success: true,
+            message: "Application submitted successfully! We'll review it and get back to you within 3-5 business days."
+        };
+    } catch (error) {
+        console.error("Error submitting teacher registration:", error);
+        return { success: false, message: 'An error occurred during submission.' };
+    }
 }
 
 

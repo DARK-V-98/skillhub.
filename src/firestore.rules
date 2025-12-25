@@ -134,5 +134,10 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']));
     }
+
+    match /teacherApplications/{userId} {
+      allow read, create: if isOwner(userId);
+      allow update: if isOneOfRoles(request.auth.uid, ['admin', 'developer']);
+    }
   }
 }

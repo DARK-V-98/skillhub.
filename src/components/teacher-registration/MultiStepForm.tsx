@@ -11,22 +11,21 @@ import FormNavigation from './FormNavigation';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import StepIndicator from './StepIndicator';
+import { useUser } from '@/firebase/auth/use-user';
+import { useRouter } from 'next/navigation';
+
 
 const steps = [
   { id: 1, title: 'Personal Information', fields: ['fullName', 'email', 'phone', 'dateOfBirth', 'profilePhoto', 'country', 'timezone', 'preferredLanguage'] },
   { id: 2, title: 'Professional Background', fields: ['bio', 'headline', 'areasOfExpertise', 'linkedinUrl', 'websiteUrl'] },
-  // { id: 3, title: 'Education & Credentials' },
-  // { id: 4, title: 'Teaching Profile' },
-  // { id: 5, title: 'Social Proof & Portfolio' },
-  // { id: 6, title: 'Course Planning' },
-  // { id: 7, title: 'Payment Information' },
-  // { id: 8, title: 'Legal & Agreements' },
-  // { id: 9, title: 'Additional Information' },
 ];
 
 export default function MultiStepForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const { toast } = useToast();
+  const { user } = useUser();
+  const router = useRouter();
+
 
   const methods = useForm<z.infer<typeof teacherRegistrationSchema>>({
     resolver: zodResolver(teacherRegistrationSchema),
@@ -45,7 +44,7 @@ export default function MultiStepForm() {
     }
   });
 
-  const { trigger, getValues, formState } = methods;
+  const { trigger, formState } = methods;
 
   const handleNext = async () => {
     const fields = steps[currentStep - 1].fields;
@@ -64,7 +63,11 @@ export default function MultiStepForm() {
   };
 
   const onSubmit = async (data: z.infer<typeof teacherRegistrationSchema>) => {
-    // This is a workaround for FormData with Server Actions in Next.js
+    if (!user) {
+        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to submit an application."});
+        return;
+    }
+
     const plainDataObject: { [key: string]: any } = {};
     Object.entries(data).forEach(([key, value]) => {
         if (!(value instanceof File)) {
@@ -72,16 +75,14 @@ export default function MultiStepForm() {
         }
     });
 
-    const result = await submitTeacherRegistration(plainDataObject);
+    const result = await submitTeacherRegistration(plainDataObject, user.uid);
 
     if (result.success) {
       toast({
         title: 'Application Submitted!',
         description: result.message,
       });
-      // Optionally reset form or redirect
-      // methods.reset();
-      // setCurrentStep(1);
+      router.push('/register/teacher/status');
     } else {
       toast({
         variant: 'destructive',
@@ -103,8 +104,6 @@ export default function MultiStepForm() {
           <div className={currentStep === 2 ? 'block' : 'hidden'}>
             <Step2Professional />
           </div>
-
-          {/* Other steps will go here */}
 
           <FormNavigation
             currentStep={currentStep}
