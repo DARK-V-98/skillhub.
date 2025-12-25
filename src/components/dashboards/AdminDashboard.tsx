@@ -39,7 +39,10 @@ const AdminDashboard: React.FC = () => {
   
   const totalRevenue = React.useMemo(() => {
     if (!courses) return 0;
-    return courses.reduce((acc, course) => acc + course.price * course.students.length, 0);
+    return courses.reduce((acc, course) => {
+        const studentCount = Array.isArray(course.students) ? course.students.length : 0;
+        return acc + (course.price * studentCount);
+    }, 0);
   }, [courses]);
 
   if (loading) {
