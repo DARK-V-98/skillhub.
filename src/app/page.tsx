@@ -77,25 +77,6 @@ const testimonials = [
     },
 ];
 
-const sentence = {
-  hidden: { opacity: 1 },
-  visible: {
-    opacity: 1,
-    transition: {
-      delay: 0.5,
-      staggerChildren: 0.04,
-    },
-  },
-};
-
-const letter = {
-  hidden: { opacity: 0, y: 50 },
-  visible: {
-    opacity: 1,
-    y: 0,
-  },
-};
-
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
@@ -130,25 +111,16 @@ export default function HomePage() {
           animate="visible"
         >
           <div className="container mx-auto px-4 text-center">
-            <motion.h1 
-              className="text-4xl md:text-6xl font-extrabold tracking-tight text-gradient mb-6"
-              variants={sentence}
-            >
-              {heroText.split("").map((char, index) => (
-                <motion.span
-                  key={char + "-" + index}
-                  className="inline-block"
-                  variants={letter}
-                >
-                  {char}
-                </motion.span>
-              ))}
-            </motion.h1>
+             <div className="typewriter inline-block">
+                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gradient mb-6">
+                    {heroText}
+                </h1>
+            </div>
             <motion.p 
               className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground mb-10"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1, duration: 0.5 }}
+              transition={{ delay: 4, duration: 0.5 }}
             >
               Bridge education gaps with our AI-powered, live teaching tools. Launch your own courses, engage with a global community, and unlock new opportunities.
             </motion.p>
@@ -156,7 +128,7 @@ export default function HomePage() {
               className="flex flex-col sm:flex-row justify-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2, duration: 0.5 }}
+              transition={{ delay: 4.2, duration: 0.5 }}
             >
               <Button size="lg" asChild>
                 <Link href="/dashboard">Get Started Free</Link>

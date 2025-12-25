@@ -180,6 +180,29 @@
   .animate-pulse-soft {
     animation: pulseSoft 2s ease-in-out infinite;
   }
+  
+  .typewriter h1 {
+    overflow: hidden;
+    border-right: .15em solid hsl(var(--primary));
+    white-space: nowrap;
+    margin: 0 auto;
+    letter-spacing: .1em;
+    animation: 
+      typing 3.5s steps(32, end),
+      blink-caret .75s step-end infinite;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: hsl(var(--primary)); }
+  }
+
 
   @keyframes pulseSoft {
     0%, 100% { opacity: 1; }
