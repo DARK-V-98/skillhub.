@@ -32,7 +32,8 @@ export default function StudentsPage() {
   }, [teacherCourses]);
 
   // 3. Fetch all student profiles based on the IDs
-  // Note: 'in' queries are limited to 30 items. For more, you'd need multiple queries.
+  // Note: 'in' queries are limited to 30 items per query. 
+  // For larger student lists, pagination or multiple queries would be needed.
   const studentsQuery = firestore && studentIds.length > 0
     ? query(collection(firestore, 'users'), where('__name__', 'in', studentIds.slice(0, 30)))
     : null;
@@ -46,7 +47,8 @@ export default function StudentsPage() {
         const enrolledCourse = teacherCourses.find(c => Array.isArray(c.students) && c.students.includes(student.id));
         return {
             ...student,
-            courseTitle: enrolledCourse?.title || 'Unknown Course'
+            studentId: student.id,
+            courseTitle: enrolledCourse?.title || 'Multiple Courses'
         }
     });
   }, [students, teacherCourses]);

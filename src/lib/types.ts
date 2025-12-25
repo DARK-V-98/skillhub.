@@ -163,3 +163,9 @@ export const teacherRegistrationSchema = z.object({
   timezone: z.string().min(2, 'Please select a timezone'),
   preferredLanguage: z.array(z.string()).min(1, 'Please select at least one language'),
 });
+
+
+export type StudentData = UserProfile & {
+  studentId: string;
+  courseTitle: string;
+};
