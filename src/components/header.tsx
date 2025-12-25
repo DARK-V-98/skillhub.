@@ -33,7 +33,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <Logo width={64} />
+            <Logo width={40} />
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
             {navLinks.map(link => (
@@ -98,7 +98,7 @@ export default function Header() {
               <SheetContent side="left">
                 <div className="p-6">
                   <Link href="/" className="flex items-center gap-2 mb-8" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Logo width={40} />
+                    <Logo width={60} />
                   </Link>
                   <nav className="flex flex-col gap-4 text-lg font-medium">
                      {navLinks.map(link => (

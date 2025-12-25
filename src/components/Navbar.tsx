@@ -100,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
             </Button>
           )}
           <Link href="/">
-            <Logo size="lg" showText={false} />
+            <Logo width={60} />
           </Link>
         </div>
         

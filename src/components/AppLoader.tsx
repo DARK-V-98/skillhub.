@@ -15,7 +15,7 @@ const LoadingScreen = () => (
       animate={{ scale: 1, opacity: 1 }}
       transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
     >
-      <Logo size="lg" />
+      <Logo width={90} />
     </motion.div>
   </motion.div>
 );
