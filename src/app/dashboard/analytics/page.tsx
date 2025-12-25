@@ -49,8 +49,8 @@ const AnalyticsPage: React.FC = () => {
     const coursesQuery = user ? query(collection(firestore, 'courses'), where('instructorId', '==', user.uid)) : null;
     const { data: myCourses, loading: coursesLoading } = useCollection<Course>(coursesQuery);
 
-    const totalStudents = React.useMemo(() => myCourses?.reduce((acc, course) => acc + course.students.length, 0) || 0, [myCourses]);
-    const courseRevenue = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (course.price * course.students.length), 0) || 0, [myCourses]);
+    const totalStudents = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (Array.isArray(course.students) ? course.students.length : 0), 0) || 0, [myCourses]);
+    const courseRevenue = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (course.price * (Array.isArray(course.students) ? course.students.length : 0)), 0) || 0, [myCourses]);
     const averageRating = React.useMemo(() => {
         if (!myCourses || myCourses.length === 0) return 0;
         const ratedCourses = myCourses.filter(c => c.rating > 0);
