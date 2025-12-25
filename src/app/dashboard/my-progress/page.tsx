@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import { useUser } from '@/firebase/auth/use-user';
@@ -37,15 +36,18 @@ const MyProgressPage: React.FC = () => {
       coursesCompleted: 0,
       lessonsCompleted: 0,
       totalTime: 0,
+      averageProgress: 0,
     };
 
     let coursesCompleted = 0;
     let lessonsCompleted = 0;
     let totalTime = 0;
+    let totalProgress = 0;
 
     enrolledCourses.forEach(course => {
       const studentProgress = course.progress?.[user.uid];
       if (studentProgress) {
+        totalProgress += studentProgress.progress || 0;
         if (studentProgress.progress === 100) {
           coursesCompleted++;
         }
@@ -54,7 +56,9 @@ const MyProgressPage: React.FC = () => {
       }
     });
 
-    return { coursesCompleted, lessonsCompleted, totalTime };
+    const averageProgress = enrolledCourses.length > 0 ? totalProgress / enrolledCourses.length : 0;
+
+    return { coursesCompleted, lessonsCompleted, totalTime, averageProgress };
   }, [enrolledCourses, user]);
 
   const today = new Date();
@@ -88,14 +92,14 @@ const MyProgressPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Courses Completed"
           value={overallStats.coursesCompleted}
           icon={CheckCircle}
         />
         <StatCard
-          title="Lessons Watched"
+          title="Lessons Completed"
           value={overallStats.lessonsCompleted}
           icon={BarChart}
         />
@@ -103,6 +107,11 @@ const MyProgressPage: React.FC = () => {
           title="Total Learning Time"
           value={`${(overallStats.totalTime / 60).toFixed(1)}h`}
           icon={Clock}
+        />
+         <StatCard
+          title="Average Progress"
+          value={`${Math.round(overallStats.averageProgress)}%`}
+          icon={TrendingUp}
         />
       </div>
 

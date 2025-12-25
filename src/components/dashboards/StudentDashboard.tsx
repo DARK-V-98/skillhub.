@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import { 
@@ -19,7 +18,7 @@ import { useUser } from '@/firebase/auth/use-user';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection, query, where, limit, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import type { Course, LiveClass, Achievement } from '@/lib/types';
+import type { Course, LiveClass, Achievement, StudentProgress } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,7 +29,7 @@ const StudentDashboard: React.FC = () => {
   const enrolledCoursesQuery = firestore && user?.uid ? query(collection(firestore, 'courses'), where('students', 'array-contains', user.uid), limit(3)) : null;
   const { data: enrolledCourses, loading: enrolledCoursesLoading } = useCollection<Course>(enrolledCoursesQuery);
 
-  const recommendedCoursesQuery = firestore ? query(collection(firestore, 'courses'), limit(4)) : null;
+  const recommendedCoursesQuery = firestore ? query(collection(firestore, 'courses'), where('students', 'not-in', [user?.uid || '']), limit(4)) : null;
   const { data: recommendedCourses, loading: recommendedCoursesLoading } = useCollection<Course>(recommendedCoursesQuery);
   
   const liveClassesQuery = firestore ? query(collection(firestore, 'liveClasses'), orderBy('startTime', 'asc')) : null;
@@ -44,6 +43,21 @@ const StudentDashboard: React.FC = () => {
   const liveNow = liveClasses?.filter(c => new Date(c.startTime) <= new Date() && new Date(c.startTime).getTime() + c.duration * 60000 > Date.now()) || [];
 
   const isLoading = userLoading || enrolledCoursesLoading || recommendedCoursesLoading || liveClassesLoading || achievementsLoading;
+
+  const { totalTime, averageProgress } = React.useMemo(() => {
+    if (!enrolledCourses || !user) return { totalTime: 0, averageProgress: 0 };
+    let totalTime = 0;
+    let totalProgress = 0;
+    enrolledCourses.forEach(course => {
+      const studentProgress = course.progress?.[user.uid];
+      if(studentProgress) {
+        totalTime += studentProgress.timeSpent || 0;
+        totalProgress += studentProgress.progress || 0;
+      }
+    });
+    const avgProgress = enrolledCourses.length > 0 ? totalProgress / enrolledCourses.length : 0;
+    return { totalTime, averageProgress: avgProgress };
+  }, [enrolledCourses, user]);
 
   const totalEnrolled = enrolledCourses?.length || 0;
   const totalAchievements = achievements?.length || 0;
@@ -64,9 +78,11 @@ const StudentDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.displayName?.split(' ')[0] || 'Student'}! 👋</h1>
           <p className="text-muted-foreground mt-1">Continue your learning journey today.</p>
         </div>
-        <Button className="btn-touch-target" size="lg">
-          <Play className="h-5 w-5 mr-2" />
-          Resume Learning
+        <Button className="btn-touch-target" size="lg" asChild>
+          <Link href="/dashboard/my-courses">
+            <Play className="h-5 w-5 mr-2" />
+            My Courses
+          </Link>
         </Button>
       </div>
 
@@ -76,25 +92,21 @@ const StudentDashboard: React.FC = () => {
           title="Active Courses"
           value={totalEnrolled}
           icon={BookOpen}
-          change={{ value: 2, positive: true }}
         />
         <StatCard
           title="Achievements"
           value={totalAchievements}
           icon={Trophy}
-          change={{ value: 1, positive: true }}
         />
         <StatCard
           title="Learning Hours"
-          value="47.5h"
+          value={`${(totalTime / 60).toFixed(1)}h`}
           icon={Clock}
-          change={{ value: 12, positive: true }}
         />
         <StatCard
           title="Avg. Progress"
-          value="68%"
+          value={`${Math.round(averageProgress)}%`}
           icon={TrendingUp}
-          change={{ value: 8, positive: true }}
         />
       </div>
 
@@ -205,8 +217,8 @@ const StudentDashboard: React.FC = () => {
             <Star className="h-5 w-5 text-primary" />
             Recommended for You
           </h2>
-          <Button variant="ghost" className="text-primary">
-            Browse All
+          <Button variant="ghost" className="text-primary" asChild>
+            <Link href="/">Browse All</Link>
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -216,6 +228,11 @@ const StudentDashboard: React.FC = () => {
               course={course}
             />
           ))}
+           {!recommendedCoursesLoading && recommendedCourses?.length === 0 && (
+            <div className="text-center py-12 border-2 border-dashed rounded-lg col-span-full">
+              <h3 className="text-lg font-medium">No courses to recommend right now.</h3>
+            </div>
+          )}
         </div>
       </section>
     </div>
