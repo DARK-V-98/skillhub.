@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { 
@@ -14,6 +15,7 @@ import {
   Shield,
   TrendingUp,
   User as UserIcon,
+  Trophy
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { cn } from '@/lib/utils';
@@ -31,6 +33,7 @@ const studentNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
   { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
   { id: 'my-progress', label: 'My Progress', icon: TrendingUp, href: '/dashboard/my-progress' },
+  { id: 'achievements', label: 'Achievements', icon: Trophy, href: '/dashboard/achievements' },
   { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/live-classes' },
   { id: 'study-rooms', label: 'Study Rooms', icon: Users, href: '/dashboard/study-rooms' },
   { id: 'community', label: 'Community', icon: MessageSquare, href: '/dashboard/community' },

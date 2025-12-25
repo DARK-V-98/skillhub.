@@ -36,7 +36,7 @@ const StudentDashboard: React.FC = () => {
   const liveClassesQuery = firestore ? query(collection(firestore, 'liveClasses'), orderBy('startTime', 'asc')) : null;
   const { data: liveClasses, loading: liveClassesLoading } = useCollection<LiveClass>(liveClassesQuery);
   
-  const achievementsQuery = user && firestore ? query(collection(firestore, 'users', user.uid, 'achievements'), limit(2)) : null;
+  const achievementsQuery = user && firestore ? query(collection(firestore, 'users', user.uid, 'achievements'), orderBy('earnedAt', 'desc'), limit(2)) : null;
   const { data: achievements, loading: achievementsLoading } = useCollection<Achievement>(achievementsQuery);
 
 
@@ -179,8 +179,8 @@ const StudentDashboard: React.FC = () => {
             <Trophy className="h-5 w-5 text-primary" />
             Recent Achievements
           </h2>
-          <Button variant="ghost" className="text-primary">
-            View All
+          <Button variant="ghost" className="text-primary" asChild>
+            <Link href="/dashboard/achievements">View All</Link>
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
