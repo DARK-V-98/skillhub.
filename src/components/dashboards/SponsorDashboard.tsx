@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import { 
@@ -73,7 +72,7 @@ const SponsorDashboard: React.FC = () => {
           icon={Users}
         />
         <StatCard
-          title="Budget Allocated"
+          title="Total Contribution"
           value={`$${totalBudget.toLocaleString()}`}
           icon={DollarSign}
         />
@@ -107,7 +106,7 @@ const SponsorDashboard: React.FC = () => {
               Budget Overview
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-64">
+           <CardContent className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">Budget allocation chart coming soon.</p>
           </CardContent>
         </Card>
@@ -167,6 +166,11 @@ const SponsorDashboard: React.FC = () => {
               </CardContent>
             </Card>
           ))}
+           {!loading && scholarships?.length === 0 && (
+            <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                <h3 className="text-lg font-medium">No scholarships found.</h3>
+            </div>
+           )}
         </div>
       </section>
     </div>
