@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -30,6 +31,17 @@ export default function MultiStepForm() {
   const methods = useForm<z.infer<typeof teacherRegistrationSchema>>({
     resolver: zodResolver(teacherRegistrationSchema),
     mode: 'onChange',
+    defaultValues: {
+        fullName: '',
+        email: '',
+        phone: '',
+        bio: '',
+        headline: '',
+        areasOfExpertise: [],
+        linkedinUrl: '',
+        websiteUrl: '',
+        preferredLanguage: [],
+    }
   });
 
   const { trigger, getValues, formState } = methods;
@@ -51,18 +63,15 @@ export default function MultiStepForm() {
   };
 
   const onSubmit = async (data: z.infer<typeof teacherRegistrationSchema>) => {
-    const formData = new FormData();
+    // This is a workaround for FormData with Server Actions in Next.js
+    const plainDataObject: { [key: string]: any } = {};
     Object.entries(data).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if(Array.isArray(value)) {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        formData.append(key, value);
-      }
+        if (!(value instanceof File)) {
+            plainDataObject[key] = value;
+        }
     });
 
-    const result = await submitTeacherRegistration(formData);
+    const result = await submitTeacherRegistration(plainDataObject);
 
     if (result.success) {
       toast({
@@ -87,8 +96,12 @@ export default function MultiStepForm() {
         <StepIndicator steps={steps} currentStep={currentStep} />
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8 mt-8">
           
-          {currentStep === 1 && <Step1Personal />}
-          {currentStep === 2 && <Step2Professional />}
+          <div className={currentStep === 1 ? 'block' : 'hidden'}>
+            <Step1Personal />
+          </div>
+          <div className={currentStep === 2 ? 'block' : 'hidden'}>
+            <Step2Professional />
+          </div>
 
           {/* Other steps will go here */}
 
