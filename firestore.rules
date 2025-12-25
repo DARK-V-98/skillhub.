@@ -25,6 +25,14 @@ service cloud.firestore {
       return userRole in roles;
     }
 
+    function isEnrolled(courseId) {
+      return request.auth.uid in get(/databases/$(database)/documents/courses/$(courseId)).data.students;
+    }
+
+    function isInstructor(courseId) {
+      return request.auth.uid == get(/databases/$(database)/documents/courses/$(courseId)).data.instructorId;
+    }
+
     match /users/{userId} {
       allow read;
       allow create: if isSignedIn() && isOwner(userId);
@@ -34,6 +42,14 @@ service cloud.firestore {
     match /courses/{courseId} {
       allow read;
       allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+    }
+
+    match /courses/{courseId}/messages/{messageId} {
+      allow read, create: if isSignedIn() && (isInstructor(courseId) || isEnrolled(courseId));
+    }
+
+    match /courses/{courseId}/participants/{participantId} {
+        allow read, write: if isSignedIn() && (isInstructor(courseId) || isOwner(participantId));
     }
 
     match /liveClasses/{classId} {
@@ -50,9 +66,9 @@ service cloud.firestore {
     }
     
     match /liveClasses/{classId}/participants/{participantId} {
-      allow read, write: if isSignedIn();
+      allow read, create;
       allow update: if isSignedIn() && (isOwner(participantId) || isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']));
-      allow delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+      allow delete: if isSignedIn() && (isOwner(participantId) || isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']));
     }
 
     match /users/{userId}/achievements/{achievementId} {
@@ -102,5 +118,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
