@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from "zod";
-import { getFirestore, doc, updateDoc, arrayUnion, arrayRemove, getDoc, runTransaction, collection, query, where, getDocs, writeBatch, setDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, arrayUnion, arrayRemove, getDoc, runTransaction, collection, query, where, getDocs, writeBatch, setDoc, serverTimestamp, addDoc } from "firebase/firestore";
 import { app } from "@/firebase/config";
 import { Course, CommunityVote, teacherRegistrationSchema, UserProfile } from "@/lib/types";
 import { getAuth } from "firebase/auth";
@@ -307,4 +307,26 @@ export async function toggleBlogPostLike(postId: string, userId: string): Promis
     console.error("Error toggling like:", error);
     return { success: false, message: 'An unknown error occurred.', liked: false };
   }
+}
+
+const feedbackSchema = z.object({
+    title: z.string().min(5, "Title must be at least 5 characters."),
+    message: z.string().min(10, "Message must be at least 10 characters."),
+    userId: z.string(),
+    userName: z.string(),
+    userEmail: z.string().email(),
+});
+
+export async function submitFeedback(data: z.infer<typeof feedbackSchema>) {
+    const firestore = getFirestore(app);
+    try {
+        await addDoc(collection(firestore, 'feedback'), {
+            ...data,
+            createdAt: serverTimestamp(),
+        });
+        return { success: true, message: 'Thank you for your feedback!' };
+    } catch (error) {
+        console.error("Error submitting feedback:", error);
+        return { success: false, message: 'Could not submit your feedback. Please try again.' };
+    }
 }

@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Github, Linkedin, Twitter } from 'lucide-react';
 import Logo from './Logo';
@@ -8,7 +9,7 @@ export default function Footer() {
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
         <div className="md:col-span-2">
-          <Logo size="lg" showText={false} />
+          <Logo width={64}/>
           <p className="mt-4 text-muted-foreground max-w-xs">
             Empowering learners and educators worldwide with accessible, quality education.
           </p>
@@ -33,7 +34,8 @@ export default function Footer() {
         <div>
           <h4 className="font-semibold mb-4">Resources</h4>
           <ul className="space-y-2 text-muted-foreground">
-            <li><Link href="#blog" className="hover:text-primary">Blog</Link></li>
+            <li><Link href="/blog" className="hover:text-primary">Blog</Link></li>
+            <li><Link href="/feedback" className="hover:text-primary">Feedback</Link></li>
             <li><Link href="#help" className="hover:text-primary">Help Center</Link></li>
             <li><Link href="#terms" className="hover:text-primary">Terms of Service</Link></li>
             <li><Link href="#privacy" className="hover:text-primary">Privacy Policy</Link></li>

@@ -152,5 +152,10 @@ service cloud.firestore {
     match /helpChats/{chatId}/messages/{messageId} {
       allow read, create: true;
     }
+
+    match /feedback/{feedbackId} {
+        allow create: if isSignedIn();
+        allow read: if isOneOfRoles(request.auth.uid, ['admin', 'developer']);
+    }
   }
 }

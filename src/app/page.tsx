@@ -58,22 +58,22 @@ const accessibilityFeatures = {
 
 const testimonials = [
     {
-      quote: "SkillHub has completely changed the way I learn. The live classes are engaging, and the community is so supportive. I've already landed a new job with the skills I've gained!",
-      name: "Alex Johnson",
+      quote: "SkillHub එකෙන් මම ඉගෙනගත්ත දේවල් හරිම වටිනවා. Live class නිසා හැමදේම පැහැදිලිව තේරුම්ගන්න පුළුවන් වුණා. Community එකත් ගොඩක් උදව් කළා. මට දැන් අලුත් රස්සාවක් තියෙනවා!",
+      name: "Nimali Perera",
       role: "Student",
-      avatar: "https://i.pravatar.cc/150?u=alex",
+      avatar: "https://i.pravatar.cc/150?u=nimali",
     },
     {
       quote: "As an instructor, SkillHub gives me the tools I need to create high-quality content and connect with students globally. The monetization options are a fantastic bonus.",
-      name: "Dr. Sarah Chen",
+      name: "Dr. Anura Silva",
       role: "Instructor",
-      avatar: "https://i.pravatar.cc/150?u=sarah",
+      avatar: "https://i.pravatar.cc/150?u=anura",
     },
     {
       quote: "Our company's sponsorship through SkillHub has been a rewarding experience. We're directly impacting students' lives while also discovering incredible new talent for our team.",
-      name: "David Lee",
-      role: "Sponsor, TechCorp",
-      avatar: "https://i.pravatar.cc/150?u=david",
+      name: "Ravi Fernando",
+      role: "Sponsor, Innovate Lanka",
+      avatar: "https://i.pravatar.cc/150?u=ravi",
     },
 ];
 
@@ -98,16 +98,19 @@ const letter = {
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  whileInView: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  viewport: { once: true, amount: 0.2 }
 };
 
 const stagger = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1,
+    whileInView: {
+        transition: {
+            staggerChildren: 0.1,
+        },
     },
-  },
+    viewport: { once: true, amount: 0.2 }
 };
+
 
 export default function HomePage() {
   const firestore = useFirestore();
@@ -170,8 +173,8 @@ export default function HomePage() {
         <motion.section 
           className="py-12 bg-background"
           initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, amount: 0.5 }}
+          whileInView="whileInView"
+          viewport={fadeInUp.viewport}
           variants={stagger}
         >
           <div className="container mx-auto px-4">
@@ -192,8 +195,8 @@ export default function HomePage() {
             id="courses"
             className="py-20"
             initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.2 }}
+            whileInView="whileInView"
+            viewport={fadeInUp.viewport}
             variants={stagger}
           >
             <div className="container mx-auto px-4">
@@ -231,8 +234,8 @@ export default function HomePage() {
           id="features" 
           className="py-20 bg-secondary/50"
           initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, amount: 0.2 }}
+          whileInView="whileInView"
+          viewport={fadeInUp.viewport}
           variants={stagger}
         >
           <div className="container mx-auto px-4">
@@ -262,8 +265,8 @@ export default function HomePage() {
         <motion.section 
           className="py-20"
           initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, amount: 0.2 }}
+          whileInView="whileInView"
+          viewport={fadeInUp.viewport}
           variants={stagger}
         >
           <div className="container mx-auto px-4">
@@ -306,8 +309,8 @@ export default function HomePage() {
             <motion.div 
               className="text-center mb-12"
               initial="initial"
-              whileInView="animate"
-              viewport={{ once: true, amount: 0.5 }}
+              whileInView="whileInView"
+              viewport={fadeInUp.viewport}
               variants={fadeInUp}
             >
               <h2 className="text-3xl md:text-4xl font-bold">Built for Every Role</h2>
@@ -318,8 +321,8 @@ export default function HomePage() {
             <motion.div 
               className="grid grid-cols-1 md:grid-cols-3 gap-8"
               initial="initial"
-              whileInView="animate"
-              viewport={{ once: true, amount: 0.2 }}
+              whileInView="whileInView"
+              viewport={fadeInUp.viewport}
               variants={stagger}
             >
               {[
@@ -355,8 +358,8 @@ export default function HomePage() {
           <motion.div 
             className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center"
             initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.3 }}
+            whileInView="whileInView"
+            viewport={fadeInUp.viewport}
             variants={stagger}
           >
             <motion.div className="prose lg:prose-lg dark:prose-invert max-w-full" variants={fadeInUp}>
@@ -389,8 +392,8 @@ export default function HomePage() {
           <motion.div 
             className="container mx-auto px-4 text-center"
             initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.5 }}
+            whileInView="whileInView"
+            viewport={fadeInUp.viewport}
             variants={fadeInUp}
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Learning Journey?</h2>
