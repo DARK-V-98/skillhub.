@@ -8,18 +8,30 @@ import Footer from '@/components/footer';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useFirestore } from '@/firebase/provider';
+import { useDoc } from '@/firebase/firestore/use-doc';
+import { doc } from 'firebase/firestore';
 
 export default function TeachersPage() {
-  const { user, loading } = useUser();
+  const { user, loading: userLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+
+  const applicationRef = user ? doc(firestore, 'teacherApplications', user.uid) : null;
+  const { data: application, loading: appLoading } = useDoc(applicationRef);
+
+  const loading = userLoading || appLoading;
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!userLoading && !user) {
       router.push('/login?redirect=/teachers');
     }
-  }, [user, loading, router]);
+    if (!appLoading && application) {
+        router.push('/register/teacher/status');
+    }
+  }, [user, userLoading, application, appLoading, router]);
 
-  if (loading || !user) {
+  if (loading || !user || application) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
