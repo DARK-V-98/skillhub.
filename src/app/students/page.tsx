@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/auth/use-user';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { Loader2, BookHeart, Wheelchair } from 'lucide-react';
+import { Loader2, BookHeart, Accessibility } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
@@ -63,7 +63,7 @@ export default function StudentsPage() {
              <Card className="flex flex-col card-hover border-2 border-primary">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-2xl">
-                        <Wheelchair className="h-8 w-8 text-primary"/>
+                        <Accessibility className="h-8 w-8 text-primary"/>
                         Disability Inclusion Scholarship
                     </CardTitle>
                     <CardDescription>
