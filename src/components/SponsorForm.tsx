@@ -63,7 +63,7 @@ export default function SponsorForm() {
             <FormItem>
               <FormLabel>Company Name</FormLabel>
               <FormControl>
-                <Input placeholder="Your Company, Inc." {...field} />
+                <Input placeholder="Your Company (Pvt) Ltd" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -89,7 +89,7 @@ export default function SponsorForm() {
             <FormItem>
               <FormLabel>Work Email</FormLabel>
               <FormControl>
-                <Input placeholder="your.work.email@company.com" {...field} />
+                <Input placeholder="your.name@company.lk" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

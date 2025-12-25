@@ -74,7 +74,7 @@ export default function StudentForm() {
                 <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <FormControl>
-                    <Input placeholder="John" {...field} />
+                    <Input placeholder="Saman" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -87,7 +87,7 @@ export default function StudentForm() {
                 <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                    <Input placeholder="Doe" {...field} />
+                    <Input placeholder="Perera" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -101,7 +101,7 @@ export default function StudentForm() {
             <FormItem>
               <FormLabel>Full Name with Initials</FormLabel>
               <FormControl>
-                <Input placeholder="J. K. Doe" {...field} />
+                <Input placeholder="S. K. Perera" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -114,7 +114,7 @@ export default function StudentForm() {
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input placeholder="123 Main St, Anytown, USA" {...field} />
+                <Input placeholder="No. 123, Galle Road, Colombo 03" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -127,7 +127,7 @@ export default function StudentForm() {
             <FormItem>
               <FormLabel>NIC (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="National Identity Card number" {...field} />
+                <Input placeholder="e.g., 991234567V or 200012345678" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -141,7 +141,7 @@ export default function StudentForm() {
                 <FormItem>
                 <FormLabel>Contact Number</FormLabel>
                 <FormControl>
-                    <Input type="tel" placeholder="+1234567890" {...field} />
+                    <Input type="tel" placeholder="077 123 4567" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -154,7 +154,7 @@ export default function StudentForm() {
                 <FormItem>
                 <FormLabel>Guardian's Contact (Optional)</FormLabel>
                 <FormControl>
-                    <Input type="tel" placeholder="+1234567890" {...field} />
+                    <Input type="tel" placeholder="071 123 4567" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>

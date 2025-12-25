@@ -32,7 +32,7 @@ export default function Step1Personal() {
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="A. B. C. Perera" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -45,7 +45,7 @@ export default function Step1Personal() {
             <FormItem>
               <FormLabel>Email Address</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="john.doe@example.com" {...field} />
+                <Input type="email" placeholder="you@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -61,7 +61,7 @@ export default function Step1Personal() {
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input type="tel" placeholder="+1 (555) 123-4567" {...field} />
+                <Input type="tel" placeholder="+94 77 123 4567" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -144,11 +144,11 @@ export default function Step1Personal() {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="USA">United States</SelectItem>
-                                <SelectItem value="Canada">Canada</SelectItem>
-                                <SelectItem value="UK">United Kingdom</SelectItem>
-                                <SelectItem value="Australia">Australia</SelectItem>
+                                <SelectItem value="Sri Lanka">Sri Lanka</SelectItem>
                                 <SelectItem value="India">India</SelectItem>
+                                <SelectItem value="Maldives">Maldives</SelectItem>
+                                <SelectItem value="Singapore">Singapore</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -168,10 +168,7 @@ export default function Step1Personal() {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="GMT-8">PST (GMT-8)</SelectItem>
-                                <SelectItem value="GMT-5">EST (GMT-5)</SelectItem>
-                                <SelectItem value="GMT">GMT</SelectItem>
-                                <SelectItem value="GMT+5.5">IST (GMT+5:30)</SelectItem>
+                                <SelectItem value="GMT+5.5">Asia/Colombo (GMT+5:30)</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -193,11 +190,9 @@ export default function Step1Personal() {
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                            <SelectItem value="Sinhala">Sinhala</SelectItem>
+                            <SelectItem value="Tamil">Tamil</SelectItem>
                             <SelectItem value="English">English</SelectItem>
-                            <SelectItem value="Spanish">Spanish</SelectItem>
-                            <SelectItem value="French">French</SelectItem>
-                            <SelectItem value="German">German</SelectItem>
-                            <SelectItem value="Chinese">Chinese</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormDescription>You can select multiple languages in later steps.</FormDescription>
