@@ -205,13 +205,13 @@ export default function HelpChatWidget() {
         <Button
           variant="default"
           size="icon"
-          className="fixed bottom-6 left-6 z-50 rounded-full h-14 w-14 shadow-lg"
+          className="fixed bottom-24 right-6 z-50 rounded-full h-14 w-14 shadow-lg"
           aria-label="Open Help Chat"
         >
           {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
         </Button>
       </PopoverTrigger>
-      <PopoverContent side="top" align="start" className="w-80 h-96 p-0 rounded-lg overflow-hidden flex flex-col">
+      <PopoverContent side="top" align="end" className="w-80 h-96 p-0 rounded-lg overflow-hidden flex flex-col mr-2">
         <div className="p-4 border-b bg-primary text-primary-foreground">
           <h3 className="font-semibold">Support Chat</h3>
           {chatSession?.adminName && <p className="text-xs opacity-80">Speaking with {chatSession.adminName}</p>}
