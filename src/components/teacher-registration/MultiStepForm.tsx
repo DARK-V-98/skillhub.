@@ -70,14 +70,7 @@ export default function MultiStepForm() {
         return;
     }
 
-    const plainDataObject: { [key: string]: any } = {};
-    Object.entries(data).forEach(([key, value]) => {
-        if (!(value instanceof File)) {
-            plainDataObject[key] = value;
-        }
-    });
-
-    const result = await submitTeacherRegistration(plainDataObject, user.uid);
+    const result = await submitTeacherRegistration(data, user.uid);
 
     if (result.success) {
       toast({
@@ -100,10 +93,10 @@ export default function MultiStepForm() {
         <StepIndicator steps={steps} currentStep={currentStep} />
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8 mt-8">
           
-          <div className={currentStep === 1 ? 'block' : 'hidden'}>
+          <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
             <Step1Personal />
           </div>
-          <div className={currentStep === 2 ? 'block' : 'hidden'}>
+          <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
             <Step2Professional />
           </div>
 
