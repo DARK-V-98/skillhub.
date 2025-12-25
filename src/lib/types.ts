@@ -22,6 +22,19 @@ export interface StudentProgress {
   completedLessons: number;
 }
 
+export interface Lesson {
+  id: string;
+  title: string;
+  type: 'video' | 'text' | 'quiz';
+  content: string; // video URL, markdown text, or quiz ID
+}
+
+export interface Module {
+  id: string;
+  title: string;
+  lessons: Lesson[];
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -30,14 +43,15 @@ export interface Course {
   instructorAvatar: string;
   thumbnail: string;
   rating: number;
-  students: string[]; // Changed to array of student IDs
-  progress?: { [studentId: string]: StudentProgress }; // Progress per student
+  students: string[];
+  progress?: { [studentId: string]: StudentProgress };
   price: number;
   duration: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   category: string;
   description: string;
   lessonsCount: number;
+  modules?: Module[];
 }
 
 export interface LiveClass {

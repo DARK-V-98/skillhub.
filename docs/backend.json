@@ -29,6 +29,32 @@
             },
             "required": ["name", "email", "role"]
         },
+        "lesson": {
+            "title": "Lesson",
+            "description": "Represents a single lesson within a course module.",
+            "type": "object",
+            "properties": {
+                "id": { "type": "string" },
+                "title": { "type": "string" },
+                "type": { "type": "string", "enum": ["video", "text", "quiz"] },
+                "content": { "type": "string", "description": "Can be a video URL, markdown text, or a quiz ID." }
+            },
+            "required": ["id", "title", "type", "content"]
+        },
+        "module": {
+            "title": "Module",
+            "description": "Represents a module or section within a course.",
+            "type": "object",
+            "properties": {
+                "id": { "type": "string" },
+                "title": { "type": "string" },
+                "lessons": {
+                    "type": "array",
+                    "items": { "$ref": "#/entities/lesson" }
+                }
+            },
+            "required": ["id", "title", "lessons"]
+        },
         "course": {
             "title": "Course",
             "description": "Represents an educational course.",
@@ -47,7 +73,11 @@
                 "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"] },
                 "category": { "type": "string" },
                 "description": { "type": "string" },
-                "lessonsCount": { "type": "number" }
+                "lessonsCount": { "type": "number" },
+                "modules": {
+                    "type": "array",
+                    "items": { "$ref": "#/entities/module" }
+                }
             },
             "required": ["title", "instructor", "instructorId", "thumbnail", "price", "level"]
         },

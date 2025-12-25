@@ -1,6 +1,6 @@
 
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,14 +26,15 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
-import { doc, setDoc } from 'firebase/firestore';
-import { Loader2, BookOpen, ArrowLeft, PlusCircle } from 'lucide-react';
+import { doc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { Loader2, BookOpen, ArrowLeft, PlusCircle, GripVertical, Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { Course } from '@/lib/types';
+import { Course, Module } from '@/lib/types';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const courseSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -49,7 +50,6 @@ function CourseDetailsForm({ courseId }: { courseId: string }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const router = useRouter();
     
     const courseRef = firestore && courseId ? doc(firestore, 'courses', courseId) : null;
     const { data: course, loading: courseLoading } = useDoc<Course>(courseRef);
@@ -235,7 +235,49 @@ function CourseDetailsForm({ courseId }: { courseId: string }) {
     )
 }
 
-function CurriculumBuilder() {
+function CurriculumBuilder({ courseId, modules }: { courseId: string; modules?: Module[] }) {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [newModuleTitle, setNewModuleTitle] = useState('');
+    const [newLessonTitles, setNewLessonTitles] = useState<{[key: string]: string}>({});
+  
+    const handleAddModule = async () => {
+      if (!firestore || !newModuleTitle.trim()) return;
+      const courseRef = doc(firestore, 'courses', courseId);
+      const newModule = {
+        id: new Date().getTime().toString(),
+        title: newModuleTitle,
+        lessons: [],
+      };
+      await updateDoc(courseRef, { modules: arrayUnion(newModule) });
+      setNewModuleTitle('');
+      toast({ title: 'Module added successfully' });
+    };
+
+    const handleAddLesson = async (moduleId: string) => {
+        if (!firestore || !newLessonTitles[moduleId]?.trim() || !modules) return;
+        
+        const courseRef = doc(firestore, 'courses', courseId);
+        const newLesson = {
+            id: new Date().getTime().toString(),
+            title: newLessonTitles[moduleId],
+            type: 'text' as const,
+            content: ''
+        };
+        
+        const updatedModules = modules.map(module => {
+            if (module.id === moduleId) {
+                return { ...module, lessons: [...(module.lessons || []), newLesson] };
+            }
+            return module;
+        });
+
+        await setDoc(courseRef, { modules: updatedModules }, { merge: true });
+
+        setNewLessonTitles(prev => ({...prev, [moduleId]: ''}));
+        toast({ title: 'Lesson added successfully' });
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -245,13 +287,49 @@ function CurriculumBuilder() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                    <h3 className="text-lg font-medium">Your curriculum is empty.</h3>
-                    <p className="text-muted-foreground mt-1 text-sm">Add your first module or lesson to get started.</p>
-                    <Button className="mt-4">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Module
-                    </Button>
+                <Accordion type="multiple" className="w-full" defaultValue={modules?.map(m => m.id)}>
+                    {modules?.map(module => (
+                        <AccordionItem value={module.id} key={module.id} className="bg-secondary/50 rounded-md px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-3">
+                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                    <span className="font-semibold text-lg">{module.title}</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pl-8">
+                                <div className="space-y-3">
+                                    {module.lessons?.map(lesson => (
+                                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-background rounded-md border">
+                                             <div className="flex items-center gap-3">
+                                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                                <span>{lesson.title}</span>
+                                            </div>
+                                            <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
+                                        </div>
+                                    ))}
+                                    <div className="flex gap-2">
+                                        <Input 
+                                            placeholder="New Lesson Title" 
+                                            value={newLessonTitles[module.id] || ''}
+                                            onChange={(e) => setNewLessonTitles(prev => ({...prev, [module.id]: e.target.value}))}
+                                        />
+                                        <Button onClick={() => handleAddLesson(module.id)}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
+                                    </div>
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+
+                <div className="mt-6 pt-6 border-t">
+                    <div className="flex gap-2">
+                        <Input 
+                            placeholder="New Module Title"
+                            value={newModuleTitle}
+                            onChange={(e) => setNewModuleTitle(e.target.value)}
+                        />
+                        <Button onClick={handleAddModule} variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -318,7 +396,7 @@ export default function ManageCoursePage() {
             </p>
         </div>
 
-        <Tabs defaultValue="details" className="w-full">
+        <Tabs defaultValue="curriculum" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
@@ -328,7 +406,7 @@ export default function ManageCoursePage() {
                 <CourseDetailsForm courseId={courseId} />
             </TabsContent>
             <TabsContent value="curriculum" className="mt-6">
-                <CurriculumBuilder />
+                <CurriculumBuilder courseId={courseId} modules={course.modules} />
             </TabsContent>
             <TabsContent value="settings" className="mt-6">
                 <CourseSettings />
