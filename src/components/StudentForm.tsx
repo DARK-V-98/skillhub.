@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { submitStudentInquiry } from "@/app/actions";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -30,6 +31,7 @@ const formSchema = z.object({
 
 export default function StudentForm() {
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,9 +51,9 @@ export default function StudentForm() {
     if (result.success) {
       toast({
         title: "Registration Complete!",
-        description: "Your details have been saved.",
+        description: "Your details have been saved. Redirecting...",
       });
-      // Here you would typically redirect the user to the course selection
+      router.push('/discover');
     } else {
       toast({
         variant: "destructive",
