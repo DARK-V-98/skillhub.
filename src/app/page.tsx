@@ -327,13 +327,15 @@ export default function HomePage() {
               variants={stagger}
             >
               {[
-                { title: "For Students", img: "https://picsum.photos/seed/students/600/400", list: ["Live, Interactive Sessions", "Personalized Learning Paths", "Peer-to-Peer Collaboration"], btn: "Explore Courses", Form: StudentForm, formTitle: "Start Your Learning Journey", formDesc: "Sign up to explore our wide range of courses." },
-                { title: "For Teachers", img: "https://picsum.photos/seed/teacher/600/400", list: ["Content Monetization", "Powerful Authoring Tools", "Audience Engagement Analytics"], btn: "Become A Teacher", Form: TeacherForm, formTitle: "Become a Teacher", formDesc: "Share your knowledge and start earning today." },
-                { title: "For Sponsors", img: "https://picsum.photos/seed/sponsors/600/400", list: ["Fund Scholarships", "Brand Visibility", "Impact Reporting"], btn: "Become a Sponsor", Form: SponsorForm, formTitle: "Become a Sponsor", formDesc: "Make an impact and empower the next generation of learners." }
+                { title: "For Students", img: "/st.png", list: ["Live, Interactive Sessions", "Personalized Learning Paths", "Peer-to-Peer Collaboration"], btn: "Explore Courses", Form: StudentForm, formTitle: "Start Your Learning Journey", formDesc: "Sign up to explore our wide range of courses." },
+                { title: "For Teachers", img: "/te.png", list: ["Content Monetization", "Powerful Authoring Tools", "Audience Engagement Analytics"], btn: "Become A Teacher", Form: TeacherForm, formTitle: "Become a Teacher", formDesc: "Share your knowledge and start earning today." },
+                { title: "For Sponsors", img: "/sp.png", list: ["Fund Scholarships", "Brand Visibility", "Impact Reporting"], btn: "Become a Sponsor", Form: SponsorForm, formTitle: "Become a Sponsor", formDesc: "Make an impact and empower the next generation of learners." }
               ].map((role, i) => (
                 <motion.div key={i} variants={fadeInUp} whileHover={{ y: -5, transition: { duration: 0.2 } }}>
                   <Card className="overflow-hidden card-hover h-full flex flex-col">
-                    <Image src={role.img} alt={role.title} width={600} height={400} className="w-full h-48 object-cover" />
+                    <div className="relative w-full h-48">
+                      <Image src={role.img} alt={role.title} fill className="object-cover" />
+                    </div>
                     <div className="p-6 flex flex-col flex-grow">
                       <h3 className="text-2xl font-semibold mb-4">{role.title}</h3>
                       <ul className="space-y-2 text-muted-foreground flex-grow">
