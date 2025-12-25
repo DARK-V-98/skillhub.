@@ -34,7 +34,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               Posted by {post.authorName}
             </span>
             <span className="text-sm text-muted-foreground">
-              &middot; {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+              &middot; {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Just now'}
             </span>
           </div>
           <Link href={`/dashboard/community/${post.id}`} className="block">

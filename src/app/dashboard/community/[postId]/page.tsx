@@ -101,7 +101,7 @@ const PostPage = () => {
                 </Avatar>
                 <span>Posted by {post.authorName}</span>
                 <span>&middot;</span>
-                <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+                <span>{post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Just now'}</span>
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-4">{post.title}</h1>
             <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
@@ -150,7 +150,7 @@ const PostPage = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2 text-sm">
                                     <span className="font-semibold text-foreground">{comment.authorName}</span>
-                                    <span className="text-muted-foreground">&middot; {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}</span>
+                                    <span className="text-muted-foreground">&middot; {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}</span>
                                 </div>
                             </div>
                             <p className="text-foreground/90">{comment.content}</p>
@@ -174,3 +174,5 @@ const PostPage = () => {
     </div>
   );
 };
+
+export default PostPage;
