@@ -38,7 +38,10 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
   const studentProgress = showProgress && user && course.progress?.[user.uid]?.progress || 0;
   const studentCount = Array.isArray(course.students) ? course.students.length : 0;
-  const courseLink = isTeacherOrAdmin ? `/dashboard/manage-course/${course.id}` : `/dashboard/courses/${course.id}`;
+  
+  const courseLink = isTeacherOrAdmin && user && course.instructorId === user.uid 
+    ? `/dashboard/manage-course/${course.id}` 
+    : `/dashboard/courses/${course.id}`;
 
   const handleEnroll = async () => {
     if (!user) {
@@ -129,7 +132,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </div>
         </div>
         
-        {isTeacherOrAdmin && (
+        {isTeacherOrAdmin && user && course.instructorId === user.uid && (
           <Button asChild variant="secondary" className="w-full">
             <Link href={`/dashboard/manage-course/${course.id}`}>
               <Edit className="h-4 w-4 mr-2" />
