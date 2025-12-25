@@ -186,14 +186,17 @@
     border-right: .15em solid hsl(var(--primary));
     white-space: nowrap;
     margin: 0 auto;
+    letter-spacing: normal;
     animation: 
-      typing 3.5s steps(32, end) infinite,
+      typing 11.5s steps(32, end) infinite,
       blink-caret .75s step-end infinite;
   }
 
   @keyframes typing {
-    from { width: 0 }
-    to { width: 100% }
+    0% { width: 0 } /* Start typing */
+    30% { width: 100% } /* Finish typing */
+    82% { width: 100% } /* Hold for 6 seconds (3.5s * (82%-30%)) / (30%-0%) = 6.06s) */
+    100% { width: 0 } /* Delete */
   }
 
   @keyframes blink-caret {
