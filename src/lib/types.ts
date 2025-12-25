@@ -151,6 +151,7 @@ export interface StudyRoom {
 }
 
 export const teacherRegistrationSchema = z.object({
+  // Step 1
   fullName: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
@@ -161,6 +162,13 @@ export const teacherRegistrationSchema = z.object({
   country: z.string().min(2, 'Please select a country'),
   timezone: z.string().min(2, 'Please select a timezone'),
   preferredLanguage: z.array(z.string()).min(1, 'Please select at least one language'),
+  
+  // Step 2
+  bio: z.string().min(100, 'Your bio must be at least 100 characters long.'),
+  headline: z.string().min(10, 'Headline must be at least 10 characters long.').max(70, 'Headline must be 70 characters or less.'),
+  areasOfExpertise: z.array(z.string()).min(1, 'Please select at least one area of expertise.'),
+  linkedinUrl: z.string().url('Please enter a valid LinkedIn URL.').optional().or(z.literal('')),
+  websiteUrl: z.string().url('Please enter a valid website or portfolio URL.').optional().or(z.literal('')),
 });
 
 

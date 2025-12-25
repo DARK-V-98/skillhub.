@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -6,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { submitTeacherRegistration } from '@/app/actions';
 import { teacherRegistrationSchema } from '@/lib/types';
 import Step1Personal from './Step1Personal';
+import Step2Professional from './Step2Professional';
 import FormNavigation from './FormNavigation';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ import StepIndicator from './StepIndicator';
 
 const steps = [
   { id: 1, title: 'Personal Information', fields: ['fullName', 'email', 'phone', 'dateOfBirth', 'profilePhoto', 'country', 'timezone', 'preferredLanguage'] },
-  // { id: 2, title: 'Professional Background' },
+  { id: 2, title: 'Professional Background', fields: ['bio', 'headline', 'areasOfExpertise', 'linkedinUrl', 'websiteUrl'] },
   // { id: 3, title: 'Education & Credentials' },
   // { id: 4, title: 'Teaching Profile' },
   // { id: 5, title: 'Social Proof & Portfolio' },
@@ -88,6 +88,7 @@ export default function MultiStepForm() {
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8 mt-8">
           
           {currentStep === 1 && <Step1Personal />}
+          {currentStep === 2 && <Step2Professional />}
 
           {/* Other steps will go here */}
 
