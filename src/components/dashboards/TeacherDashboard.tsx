@@ -135,7 +135,7 @@ const TeacherDashboard: React.FC = () => {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           {myCourses?.slice(0, 4).map((course) => (
-             <CourseCard key={course.id} course={course} isTeacherOrAdmin />
+             <CourseCard key={course.id} course={course} />
           ))}
           {!coursesLoading && myCourses?.length === 0 && (
             <div className="text-center py-12 border-2 border-dashed rounded-lg md:col-span-2">

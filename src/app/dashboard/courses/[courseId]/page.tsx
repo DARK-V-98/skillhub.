@@ -84,9 +84,11 @@ export default function StudentCoursePage() {
                 )}
             </TabsContent>
             <TabsContent value="chat" className="mt-6">
-                <div className="h-[70vh] rounded-lg border overflow-hidden">
-                    <CourseChat course={course} />
-                </div>
+                 {course.id && (
+                    <div className="h-[70vh] rounded-lg border overflow-hidden">
+                       <CourseChat courseId={course.id} />
+                    </div>
+                )}
             </TabsContent>
         </Tabs>
     </div>

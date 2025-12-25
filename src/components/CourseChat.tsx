@@ -1,6 +1,7 @@
+
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Course, UserProfile } from '@/lib/types';
+import { UserProfile } from '@/lib/types';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
 import {
@@ -9,12 +10,10 @@ import {
   orderBy,
   serverTimestamp,
   addDoc,
-  onSnapshot,
   doc,
   setDoc,
   deleteDoc,
   where,
-  getDocs,
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Button } from './ui/button';
@@ -28,7 +27,7 @@ import { useCollection } from '@/firebase/firestore/use-collection';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 interface CourseChatProps {
-  course: Course;
+  courseId: string;
 }
 
 interface ChatMessage {
@@ -55,18 +54,18 @@ const FileIcon = ({ fileType }: { fileType: string | undefined }) => {
 };
 
 
-const CourseChat: React.FC<CourseChatProps> = ({ course }) => {
+const CourseChat: React.FC<CourseChatProps> = ({ courseId }) => {
   const { user } = useUser();
   const firestore = useFirestore();
   const [newMessage, setNewMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   
-  const messagesQuery = firestore ? query(collection(firestore, 'courses', course.id, 'messages'), orderBy('createdAt', 'asc')) : null;
+  const messagesQuery = firestore ? query(collection(firestore, 'courses', courseId, 'messages'), orderBy('createdAt', 'asc')) : null;
   const { data: messages } = useCollection<ChatMessage>(messagesQuery);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const participantsQuery = firestore ? query(collection(firestore, 'courses', course.id, 'participants'), where('status', '==', 'online')) : null;
+  const participantsQuery = firestore ? query(collection(firestore, 'courses', courseId, 'participants'), where('status', '==', 'online')) : null;
   const { data: onlineParticipants } = useCollection(participantsQuery);
 
 
@@ -77,7 +76,7 @@ const CourseChat: React.FC<CourseChatProps> = ({ course }) => {
   useEffect(() => {
     if (!firestore || !user) return;
     
-    const participantRef = doc(firestore, 'courses', course.id, 'participants', user.uid);
+    const participantRef = doc(firestore, 'courses', courseId, 'participants', user.uid);
     setDoc(participantRef, { id: user.uid, name: user.displayName, status: 'online' }, { merge: true });
 
     const handleBeforeUnload = () => {
@@ -90,13 +89,13 @@ const CourseChat: React.FC<CourseChatProps> = ({ course }) => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
         setDoc(participantRef, { status: 'offline', lastSeen: serverTimestamp() }, { merge: true });
     }
-  }, [firestore, user, course.id]);
+  }, [firestore, user, courseId]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firestore || !user || !newMessage.trim()) return;
 
-    await addDoc(collection(firestore, 'courses', course.id, 'messages'), {
+    await addDoc(collection(firestore, 'courses', courseId, 'messages'), {
         text: newMessage,
         authorId: user.uid,
         authorName: user.displayName || 'Anonymous',
@@ -113,11 +112,11 @@ const CourseChat: React.FC<CourseChatProps> = ({ course }) => {
     setIsUploading(true);
     try {
         const storage = getStorage();
-        const storageRef = ref(storage, `course_chats/${course.id}/${Date.now()}_${file.name}`);
+        const storageRef = ref(storage, `course_chats/${courseId}/${Date.now()}_${file.name}`);
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        await addDoc(collection(firestore, 'courses', course.id, 'messages'), {
+        await addDoc(collection(firestore, 'courses', courseId, 'messages'), {
             text: '',
             authorId: user.uid,
             authorName: user.displayName || 'Anonymous',
@@ -141,7 +140,7 @@ const CourseChat: React.FC<CourseChatProps> = ({ course }) => {
             <div className="p-4 border-b flex justify-between items-center">
                 <h3 className="text-foreground font-semibold flex items-center gap-2">
                     <MessageSquare className="h-5 w-5 text-primary" />
-                    {course.title} - Group Chat
+                    Group Chat
                 </h3>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="h-4 w-4"/>

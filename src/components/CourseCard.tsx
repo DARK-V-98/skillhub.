@@ -34,14 +34,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
     Advanced: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   };
 
-  const isEnrolled = user && course.students?.includes(user.uid);
+  const isEnrolled = user && Array.isArray(course.students) && course.students.includes(user.uid);
   const isOwner = user && course.instructorId === user.uid;
 
   const studentProgress = isEnrolled && course.progress?.[user.uid!]?.progress || 0;
   const studentCount = Array.isArray(course.students) ? course.students.length : 0;
   
-  const courseLink = isEnrolled || isOwner 
-    ? (isOwner ? `/dashboard/manage-course/${course.id}` : `/dashboard/my-courses/${course.id}`)
+  const courseLink = isEnrolled
+    ? `/dashboard/courses/${course.id}`
+    : isOwner
+    ? `/dashboard/manage-course/${course.id}`
     : `/`; // Link to homepage or a public course page if not enrolled/owner
 
   const handleEnroll = async () => {

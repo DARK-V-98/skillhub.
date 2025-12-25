@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import CourseCard from '@/components/CourseCard';
@@ -54,20 +55,10 @@ export default function MyCoursesPage() {
           {userCourses && userCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {userCourses.map((course) => (
-                <div key={course.id} className="relative group">
-                  <CourseCard
+                <CourseCard
+                    key={course.id}
                     course={course}
-                    showProgress={!isTeacher}
-                    onContinue={() => console.log('Continue course:', course.id)}
-                  />
-                  {isTeacher && (
-                     <Button asChild className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link href={`/dashboard/manage-course/${course.id}`}>
-                            <Edit className="h-4 w-4 mr-2" /> Manage
-                        </Link>
-                     </Button>
-                  )}
-                </div>
+                />
               ))}
             </div>
           ) : (
@@ -80,9 +71,11 @@ export default function MyCoursesPage() {
                 {isTeacher ? "Create a course to start teaching." : "Explore our course catalog to start learning."}
               </p>
               <div className="mt-6">
-                  <Link href={isTeacher ? "/dashboard/create-course" : "/dashboard"} className="text-primary font-semibold hover:underline">
-                      {isTeacher ? "Create a Course" : "Explore Courses"}
-                  </Link>
+                  <Button asChild>
+                    <Link href={isTeacher ? "/dashboard/create-course" : "/"}>
+                        {isTeacher ? "Create a Course" : "Explore Courses"}
+                    </Link>
+                  </Button>
               </div>
             </div>
           )}
