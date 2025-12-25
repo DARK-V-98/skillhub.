@@ -7,17 +7,11 @@ interface LogoProps {
   showText?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
+const Logo: React.FC<LogoProps> = ({ size = 'md' }) => {
   const sizeClasses = {
     sm: 32,
     md: 40,
     lg: 56,
-  };
-
-  const textSizes = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-3xl',
   };
 
   return (
@@ -29,11 +23,6 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
         height={sizeClasses[size]}
         className="rounded-xl"
       />
-      {showText && (
-        <span className={`${textSizes[size]} font-bold text-gradient`}>
-          SkillHub
-        </span>
-      )}
     </div>
   );
 };
