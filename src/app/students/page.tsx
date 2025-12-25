@@ -9,6 +9,9 @@ import { Loader2, BookHeart, Accessibility } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import StudentForm from '@/components/StudentForm';
+
 
 export default function StudentsPage() {
   const { user, loading } = useUser();
@@ -56,7 +59,20 @@ export default function StudentsPage() {
                     <p className="flex items-center"><CheckCircle className="h-5 w-5 mr-2 text-green-500"/> Verified certificates</p>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full">Continue with Standard</Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button className="w-full">Continue with Standard</Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[600px]">
+                            <DialogHeader>
+                                <DialogTitle>Student Registration</DialogTitle>
+                                <DialogDescription>
+                                    Please fill in your details to continue.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <StudentForm />
+                        </DialogContent>
+                    </Dialog>
                 </CardFooter>
             </Card>
 

@@ -1,3 +1,4 @@
+
 'use client';
 import { z } from 'zod';
 
@@ -6,6 +7,7 @@ export type UserRole = 'user' | 'student' | 'teacher' | 'sponsor' | 'admin' | 'd
 export interface UserProfile {
   id: string;
   name: string;
+  username?: string;
   email: string;
   avatar: string;
   role: UserRole;

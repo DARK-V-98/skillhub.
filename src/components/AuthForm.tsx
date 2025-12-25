@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -38,6 +39,7 @@ export const AuthForm = () => {
   const [view, setView] = useState<'signIn' | 'signUp' | 'forgotPassword'>('signIn');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -100,7 +102,7 @@ export const AuthForm = () => {
           setIsLoading(false);
           return;
         }
-        await signUpWithEmailAndPassword(email, password);
+        await signUpWithEmailAndPassword(email, password, username);
         handleAuthSuccess();
       } else {
         await signInWithEmailAndPassword(email, password);
@@ -119,6 +121,7 @@ export const AuthForm = () => {
         const userRef = doc(firestore, 'users', user.uid);
         await setDoc(userRef, {
             name: user.displayName,
+            username: user.email?.split('@')[0],
             email: user.email,
             avatar: user.photoURL,
             role: 'student' // Default role
@@ -174,6 +177,12 @@ export const AuthForm = () => {
             </p>
 
             <form onSubmit={handleFormSubmit} className="space-y-4">
+                {isSignUp && (
+                    <div className="space-y-2">
+                        <Label htmlFor="username">Username</Label>
+                        <Input id="username" type="text" placeholder="yourusername" required value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading} />
+                    </div>
+                )}
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />

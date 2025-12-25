@@ -9,6 +9,7 @@ import {
   createUserWithEmailAndPassword as firebaseCreateUserWithEmailAndPassword,
   signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
   sendPasswordResetEmail,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import { app } from './config';
@@ -30,6 +31,7 @@ export const signInWithGoogle = async (): Promise<User> => {
       // If user is new OR an existing user is missing a role, set it.
       await setDoc(userRef, {
           name: user.displayName,
+          username: user.email?.split('@')[0],
           email: user.email,
           avatar: user.photoURL,
           role: 'user' // Default role
@@ -43,16 +45,19 @@ export const signInWithGoogle = async (): Promise<User> => {
   }
 };
 
-export const signUpWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
+export const signUpWithEmailAndPassword = async (email: string, password: string, username: string): Promise<User> => {
     const auth = getAuth(app);
     const userCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+
+    await updateProfile(user, { displayName: username });
     
     // Save user to Firestore with a default role
     const firestore = getFirestore(app);
     const userRef = doc(firestore, 'users', user.uid);
     await setDoc(userRef, {
-        name: user.email?.split('@')[0] || 'New User',
+        name: username,
+        username: username,
         email: user.email,
         avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
         role: 'user' // Default role for new sign-ups
@@ -74,6 +79,7 @@ export const signInWithEmailAndPassword = async (email: string, password: string
     if (!userDoc.exists() || !userDoc.data()?.role) {
        await setDoc(userRef, {
             name: user.displayName || user.email?.split('@')[0],
+            username: user.displayName || user.email?.split('@')[0],
             email: user.email,
             avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
             role: 'user'

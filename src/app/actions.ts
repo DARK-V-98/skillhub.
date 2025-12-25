@@ -44,9 +44,15 @@ export async function submitInquiry(
 }
 
 const studentFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
+  firstName: z.string().min(2, "First name is required"),
+  lastName: z.string().min(2, "Last name is required"),
+  fullNameWithInitials: z.string().min(2, "Full name with initials is required"),
+  nic: z.string().optional(),
+  address: z.string().min(5, "Address is required"),
+  contactNo: z.string().min(10, "A valid contact number is required"),
+  guardianContactNo: z.string().optional(),
 });
+
 
 export async function submitStudentInquiry(
   data: z.infer<typeof studentFormSchema>
