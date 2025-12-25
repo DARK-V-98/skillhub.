@@ -25,6 +25,14 @@ service cloud.firestore {
       return userRole in roles;
     }
 
+    function isEnrolled(courseId) {
+      return request.auth.uid in get(/databases/$(database)/documents/courses/$(courseId)).data.students;
+    }
+
+    function isInstructor(courseId) {
+      return request.auth.uid == get(/databases/$(database)/documents/courses/$(courseId)).data.instructorId;
+    }
+
     match /users/{userId} {
       allow read;
       allow create: if isSignedIn() && isOwner(userId);
@@ -34,6 +42,10 @@ service cloud.firestore {
     match /courses/{courseId} {
       allow read;
       allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+    }
+
+    match /courses/{courseId}/messages/{messageId} {
+      allow read, create: if isSignedIn() && (isInstructor(courseId) || isEnrolled(courseId));
     }
 
     match /liveClasses/{classId} {

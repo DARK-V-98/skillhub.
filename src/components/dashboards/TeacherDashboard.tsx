@@ -14,7 +14,6 @@ import {
 import StatCard from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Image from 'next/image';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection, query, where } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
@@ -22,6 +21,7 @@ import { Course } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
 import Link from 'next/link';
+import CourseCard from '../CourseCard';
 
 const TeacherDashboard: React.FC = () => {
     const firestore = useFirestore();
@@ -127,56 +127,18 @@ const TeacherDashboard: React.FC = () => {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-foreground">My Courses</h2>
-          <Button variant="ghost" className="text-primary">
-            Manage All
+          <Button variant="ghost" className="text-primary" asChild>
+            <Link href="/dashboard/my-courses">
+                Manage All
+            </Link>
           </Button>
         </div>
-        <div className="grid gap-4">
-          {myCourses?.map((course) => {
-            const studentCount = Array.isArray(course.students) ? course.students.length : 0;
-            return (
-                <Card key={course.id} className="card-hover">
-                <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <Image
-                        src={course.thumbnail}
-                        alt={course.title}
-                        width={128}
-                        height={80}
-                        className="rounded-lg object-cover w-full sm:w-32 h-auto sm:h-20"
-                    />
-                    <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{course.title}</h3>
-                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {studentCount.toLocaleString()} students
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                            {course.rating}
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4" />
-                            ${(studentCount * course.price).toLocaleString()} earned
-                        </span>
-                        </div>
-                    </div>
-                    <div className="flex gap-2 self-start sm:self-center">
-                        <Button variant="outline" size="sm" className="btn-touch-target">
-                        Edit
-                        </Button>
-                        <Button variant="outline" size="sm" className="btn-touch-target">
-                        Analytics
-                        </Button>
-                    </div>
-                    </div>
-                </CardContent>
-                </Card>
-            );
-          })}
+        <div className="grid gap-4 md:grid-cols-2">
+          {myCourses?.slice(0, 4).map((course) => (
+             <CourseCard key={course.id} course={course} isTeacherOrAdmin />
+          ))}
           {!coursesLoading && myCourses?.length === 0 && (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg">
+            <div className="text-center py-12 border-2 border-dashed rounded-lg md:col-span-2">
                 <h3 className="text-lg font-medium">You haven't created any courses yet.</h3>
                  <Button asChild className="mt-4">
                     <Link href="/dashboard/create-course">Create Your First Course</Link>

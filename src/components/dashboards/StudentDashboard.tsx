@@ -136,7 +136,6 @@ const StudentDashboard: React.FC = () => {
               key={course.id}
               course={course}
               showProgress
-              onContinue={() => console.log('Continue course:', course.id)}
             />
           ))}
         </div>
@@ -215,7 +214,6 @@ const StudentDashboard: React.FC = () => {
             <CourseCard
               key={course.id}
               course={course}
-              onEnroll={() => console.log('Enroll in course:', course.id)}
             />
           ))}
         </div>

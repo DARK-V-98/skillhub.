@@ -35,6 +35,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import VideoConference from '@/components/VideoConference';
 
 const courseSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -471,25 +472,6 @@ function CurriculumBuilder({ courseId, course }: { courseId: string; course: Cou
     );
 }
 
-
-function CourseSettings() {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Course Settings</CardTitle>
-                <CardDescription>Manage publishing status, collaborators, and other advanced options.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                    <h3 className="text-lg font-medium">Advanced settings are coming soon.</h3>
-                    <p className="text-muted-foreground mt-1 text-sm">Manage course publication, collaborators, and more.</p>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-
 export default function ManageCoursePage() {
   const params = useParams();
   const courseId = params.courseId as string;
@@ -532,11 +514,11 @@ export default function ManageCoursePage() {
             </p>
         </div>
 
-        <Tabs defaultValue="curriculum" className="w-full">
+        <Tabs defaultValue="details" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
+                <TabsTrigger value="chat">Chat</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-6">
                 <CourseDetailsForm courseId={courseId} />
@@ -544,12 +526,13 @@ export default function ManageCoursePage() {
             <TabsContent value="curriculum" className="mt-6">
                 <CurriculumBuilder courseId={courseId} course={course} />
             </TabsContent>
-            <TabsContent value="settings" className="mt-6">
-                <CourseSettings />
+            <TabsContent value="chat" className="mt-6">
+                 <div className="h-[70vh] rounded-lg border overflow-hidden">
+                    <VideoConference room={course} collectionName="courses" />
+                 </div>
             </TabsContent>
         </Tabs>
     </div>
   );
 }
 
-    

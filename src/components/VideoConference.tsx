@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { UserProfile, LiveClass, StudyRoom } from '@/lib/types';
+import { UserProfile, LiveClass, StudyRoom, Course } from '@/lib/types';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
 import {
@@ -29,9 +29,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Badge } from './ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
+type Room = LiveClass | StudyRoom | Course;
+type CollectionName = 'liveClasses' | 'studyRooms' | 'courses';
+
 interface VideoConferenceProps {
-  room: LiveClass | StudyRoom;
-  collectionName: 'liveClasses' | 'studyRooms';
+  room: Room;
+  collectionName: CollectionName;
 }
 
 interface ChatMessage {
@@ -80,14 +83,14 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
   const [participants, setParticipants] = useState<UserProfile[]>([]);
   
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
-  const isTeacher = collectionName === 'liveClasses' && user?.uid === (room as LiveClass).instructorId;
+  const isTeacher = 'instructorId' in room && user?.uid === room.instructorId;
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
   const allStreams = localStream ? [{ id: user!.uid, stream: localStream, user: { id: user!.uid, name: `${user!.displayName} (You)`} }, ...remoteStreams] : remoteStreams;
 
   
   useEffect(() => {
-    if (!firestore || !user) return;
+    if (!firestore || !user || collectionName === 'courses') return;
 
     const roomRef = doc(firestore, collectionName, room.id);
     const participantRef = doc(roomRef, 'participants', user.uid);
@@ -176,7 +179,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
   }, [user]);
 
   useEffect(() => {
-    if (!user || !firestore) return;
+    if (!user || !firestore || collectionName === 'courses') return;
 
     const setupMediaAndSignaling = async () => {
       try {
@@ -340,8 +343,11 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
             deleteDoc(callDoc.ref);
         });
     }
-
-    router.push(collectionName === 'liveClasses' ? '/dashboard/live-classes' : '/dashboard/study-rooms');
+    const redirectUrl = 
+        collectionName === 'liveClasses' ? '/dashboard/live-classes' 
+        : collectionName === 'studyRooms' ? '/dashboard/study-rooms'
+        : '/dashboard';
+    router.push(redirectUrl);
   };
 
   const moderateParticipant = async (participantId: string, action: 'kick' | 'mute' | 'stopVideo') => {
@@ -356,7 +362,8 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
     }
 };
 
-  const numStreams = 1 + remoteStreams.length;
+  const isVideoEnabled = collectionName !== 'courses';
+  const numStreams = isVideoEnabled ? 1 + remoteStreams.length : 0;
   const gridLayout = 
       numStreams === 1 ? "grid-cols-1 grid-rows-1" :
       numStreams === 2 ? "grid-cols-2 grid-rows-1" :
@@ -368,63 +375,82 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-black rounded-lg overflow-hidden text-white">
         <div className="flex-1 flex flex-col relative">
-            <div className={cn("grid gap-2 h-full w-full p-2 overflow-auto", gridLayout)}>
-                {localStream && (
-                    <div className="relative bg-gray-900 rounded-md overflow-hidden">
-                        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
-                    </div>
-                )}
-                {remoteStreams.map(({ id, stream, user: streamUser }) => (
-                    <div key={id} className="relative bg-gray-900 rounded-md overflow-hidden">
-                        <video ref={el => { if(el) el.srcObject = stream }} autoPlay playsInline className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{streamUser.name}</div>
-                    </div>
-                ))}
-            </div>
+            {isVideoEnabled ? (
+                <div className={cn("grid gap-2 h-full w-full p-2 overflow-auto", gridLayout)}>
+                    {localStream && (
+                        <div className="relative bg-gray-900 rounded-md overflow-hidden">
+                            <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                            <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
+                        </div>
+                    )}
+                    {remoteStreams.map(({ id, stream, user: streamUser }) => (
+                        <div key={id} className="relative bg-gray-900 rounded-md overflow-hidden">
+                            <video ref={el => { if(el) el.srcObject = stream }} autoPlay playsInline className="w-full h-full object-cover" />
+                            <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{streamUser.name}</div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="flex flex-col h-full">
+                    {/* Chat takes full view when video is disabled */}
+                </div>
+            )}
+            
+            {isVideoEnabled && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex justify-center items-center gap-2 sm:gap-4 z-10">
+                    <TooltipProvider>
+                        <Tooltip><TooltipTrigger asChild>
+                            <Button onClick={() => toggleMic()} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
+                                {isMicOn ? <Mic /> : <MicOff />}
+                            </Button>
+                        </TooltipTrigger><TooltipContent>{isMicOn ? 'Mute' : 'Unmute'}</TooltipContent></Tooltip>
 
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex justify-center items-center gap-2 sm:gap-4 z-10">
+                        <Tooltip><TooltipTrigger asChild>
+                            <Button onClick={() => toggleCamera()} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
+                                {isCameraOn ? <Video /> : <VideoOff />}
+                            </Button>
+                        </TooltipTrigger><TooltipContent>{isCameraOn ? 'Stop Camera' : 'Start Camera'}</TooltipContent></Tooltip>
+
+                        <Tooltip><TooltipTrigger asChild>
+                            <Button onClick={handleScreenShare} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isScreenSharing && "bg-primary hover:bg-primary/90")}>
+                                {isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
+                            </Button>
+                        </TooltipTrigger><TooltipContent>{isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</TooltipContent></Tooltip>
+                    </TooltipProvider>
+
+                    <Button onClick={hangUp} variant="destructive" size="icon" className="rounded-full w-16 h-12 ml-4">
+                        <PhoneOff />
+                    </Button>
+                </div>
+            )}
+
+             <div className="absolute top-4 right-4 z-10 flex gap-2">
                 <TooltipProvider>
-                    <Tooltip><TooltipTrigger asChild>
-                        <Button onClick={() => toggleMic()} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isMicOn && "bg-destructive hover:bg-destructive/90")}>
-                            {isMicOn ? <Mic /> : <MicOff />}
-                        </Button>
-                    </TooltipTrigger><TooltipContent>{isMicOn ? 'Mute' : 'Unmute'}</TooltipContent></Tooltip>
-
-                    <Tooltip><TooltipTrigger asChild>
-                        <Button onClick={() => toggleCamera()} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", !isCameraOn && "bg-destructive hover:bg-destructive/90")}>
-                            {isCameraOn ? <Video /> : <VideoOff />}
-                        </Button>
-                    </TooltipTrigger><TooltipContent>{isCameraOn ? 'Stop Camera' : 'Start Camera'}</TooltipContent></Tooltip>
-
-                    <Tooltip><TooltipTrigger asChild>
-                        <Button onClick={handleScreenShare} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isScreenSharing && "bg-primary hover:bg-primary/90")}>
-                            {isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
-                        </Button>
-                    </TooltipTrigger><TooltipContent>{isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</TooltipContent></Tooltip>
-
-                    <Tooltip><TooltipTrigger asChild>
-                        <Button onClick={() => { setIsParticipantsOpen(false); setIsChatOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isChatOpen && 'bg-primary/80')}>
-                            <MessageSquare />
-                        </Button>
-                    </TooltipTrigger><TooltipContent>Chat</TooltipContent></Tooltip>
-
-                    <Tooltip><TooltipTrigger asChild>
-                        <Button onClick={() => { setIsChatOpen(false); setIsParticipantsOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-12 h-12 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white relative", isParticipantsOpen && 'bg-primary/80')}>
-                            <Users />
-                            <Badge className="absolute -top-1 -right-1 px-1.5 h-5">{participants.length}</Badge>
-                        </Button>
-                    </TooltipTrigger><TooltipContent>Participants</TooltipContent></Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button onClick={() => { setIsParticipantsOpen(false); setIsChatOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-10 h-10 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white", isChatOpen && 'bg-primary/80')}>
+                                <MessageSquare className="h-5 w-5"/>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Chat</TooltipContent>
+                    </Tooltip>
+                    {collectionName !== 'courses' && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button onClick={() => { setIsChatOpen(false); setIsParticipantsOpen(p => !p); }} variant="outline" size="icon" className={cn("rounded-full w-10 h-10 bg-gray-700/80 hover:bg-gray-600/80 border-none text-white relative", isParticipantsOpen && 'bg-primary/80')}>
+                                    <Users className="h-5 w-5"/>
+                                    <Badge className="absolute -top-1 -right-1 px-1.5 h-5">{participants.length}</Badge>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Participants</TooltipContent>
+                        </Tooltip>
+                    )}
                 </TooltipProvider>
-
-                <Button onClick={hangUp} variant="destructive" size="icon" className="rounded-full w-16 h-12 ml-4">
-                <PhoneOff />
-                </Button>
             </div>
       </div>
 
       {(isChatOpen || isParticipantsOpen) && (
-          <div className="w-80 flex-shrink-0 bg-gray-900/80 backdrop-blur-sm flex flex-col">
+          <div className={cn("w-80 flex-shrink-0 bg-gray-900/80 backdrop-blur-sm flex flex-col", !isVideoEnabled && "w-full")}>
             {isChatOpen && (
                 <TooltipProvider>
                     <div className="p-4 border-b border-gray-700">
@@ -479,7 +505,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
                     </form>
                 </TooltipProvider>
             )}
-            {isParticipantsOpen && (
+            {isParticipantsOpen && collectionName !== 'courses' && (
                 <>
                     <div className="p-4 border-b border-gray-700">
                         <h3 className="text-white font-semibold">Participants ({participants.length})</h3>
