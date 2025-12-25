@@ -1,5 +1,6 @@
+
 'use client';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { UserRole } from '@/lib/types';
 
 interface RoleContextType {
@@ -10,7 +11,21 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState<UserRole>('student');
+  const [currentRole, _setCurrentRole] = useState<UserRole>('student');
+
+  useEffect(() => {
+    // On mount, try to load the role from localStorage
+    const savedRole = localStorage.getItem('developer-role') as UserRole;
+    if (savedRole) {
+      _setCurrentRole(savedRole);
+    }
+  }, []);
+
+  const setCurrentRole = (role: UserRole) => {
+    // Save the new role to localStorage and update the state
+    localStorage.setItem('developer-role', role);
+    _setCurrentRole(role);
+  };
 
   return (
     <RoleContext.Provider value={{ currentRole, setCurrentRole }}>
