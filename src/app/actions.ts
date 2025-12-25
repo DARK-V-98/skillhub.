@@ -2,10 +2,10 @@
 "use server";
 
 import { z } from "zod";
-import { getFirestore, doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, arrayUnion, getDoc, runTransaction, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { app } from "@/firebase/config";
 import { getAuth } from "firebase/auth";
-import { Course } from "@/lib/types";
+import { Course, CommunityVote } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string(),
@@ -156,5 +156,88 @@ export async function enrollInCourse(courseId: string, userId: string): Promise<
         return { success: false, message: `Failed to enroll: ${error.message}` };
       }
       return { success: false, message: "An unknown error occurred during enrollment." };
+    }
+  }
+
+
+export async function handleVote(
+    refId: string,
+    refType: 'post' | 'comment',
+    userId: string,
+    direction: 'up' | 'down'
+  ): Promise<{ success: boolean; message: string }> {
+    if (!userId) {
+      return { success: false, message: 'You must be logged in to vote.' };
+    }
+  
+    const firestore = getFirestore(app);
+    const votesCollection = collection(firestore, 'votes');
+    const q = query(votesCollection, where('refId', '==', refId), where('userId', '==', userId));
+    
+    const contentRef = doc(firestore, refType === 'post' ? 'communityPosts' : `communityPosts/${refId.split('_')[0]}/comments`, refId);
+  
+    try {
+      await runTransaction(firestore, async (transaction) => {
+        const voteSnapshot = await getDocs(q);
+        const existingVoteDoc = voteSnapshot.docs[0];
+  
+        const contentSnapshot = await transaction.get(contentRef);
+        if (!contentSnapshot.exists()) {
+          throw new Error("Content not found");
+        }
+  
+        let upvotesChange = 0;
+        let downvotesChange = 0;
+  
+        if (existingVoteDoc) {
+          // User has voted before
+          const existingVote = existingVoteDoc.data() as CommunityVote;
+          
+          const voteRef = doc(firestore, 'votes', existingVoteDoc.id);
+
+          if (existingVote.direction === direction) {
+            // User is retracting their vote
+            transaction.delete(voteRef);
+            if (direction === 'up') upvotesChange = -1;
+            else downvotesChange = -1;
+          } else {
+            // User is changing their vote
+            transaction.update(voteRef, { direction });
+            if (direction === 'up') {
+              upvotesChange = 1;
+              downvotesChange = -1;
+            } else {
+              upvotesChange = -1;
+              downvotesChange = 1;
+            }
+          }
+        } else {
+          // New vote
+          const newVoteRef = doc(collection(firestore, 'votes'));
+          transaction.set(newVoteRef, {
+            userId,
+            refId,
+            refType,
+            direction,
+          });
+          if (direction === 'up') upvotesChange = 1;
+          else downvotesChange = 1;
+        }
+
+        const currentUpvotes = contentSnapshot.data().upvotes || 0;
+        const currentDownvotes = contentSnapshot.data().downvotes || 0;
+
+        transaction.update(contentRef, {
+            upvotes: Math.max(0, currentUpvotes + upvotesChange),
+            downvotes: Math.max(0, currentDownvotes + downvotesChange),
+        });
+      });
+      return { success: true, message: 'Vote recorded.' };
+    } catch (e) {
+      console.error("Transaction failed: ", e);
+      if (e instanceof Error) {
+        return { success: false, message: e.message };
+      }
+      return { success: false, message: 'An unknown error occurred.' };
     }
   }

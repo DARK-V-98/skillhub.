@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, collection, query, orderBy, addDoc, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
@@ -14,6 +14,8 @@ import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser } from '@/firebase/auth/use-user';
 import { useToast } from '@/hooks/use-toast';
+import { handleVote } from '@/app/actions';
+import { cn } from '@/lib/utils';
 
 const PostPage = () => {
     const params = useParams();
@@ -30,6 +32,43 @@ const PostPage = () => {
 
     const [newComment, setNewComment] = React.useState('');
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    
+    const [postVote, setPostVote] = useState(post?.userVote);
+    const [postScore, setPostScore] = useState(post ? post.upvotes - post.downvotes : 0);
+    const [isVotingPost, setIsVotingPost] = useState(false);
+
+    React.useEffect(() => {
+        if(post) {
+            setPostVote(post.userVote);
+            setPostScore(post.upvotes - post.downvotes);
+        }
+    }, [post]);
+
+    const onVotePost = async (direction: 'up' | 'down') => {
+        if (!user) return toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to vote.' });
+        if (isVotingPost) return;
+        setIsVotingPost(true);
+    
+        const previousVote = postVote;
+        const previousScore = postScore;
+    
+        if (postVote === direction) {
+          setPostVote(undefined);
+          setPostScore(prev => prev + (direction === 'up' ? -1 : 1));
+        } else {
+          setPostVote(direction);
+          if(previousVote) setPostScore(prev => prev + (direction === 'up' ? 2 : -2));
+          else setPostScore(prev => prev + (direction === 'up' ? 1 : -1));
+        }
+    
+        const result = await handleVote(post!.id, 'post', user.uid, direction);
+        if (!result.success) {
+          setPostVote(previousVote);
+          setPostScore(previousScore);
+          toast({ variant: 'destructive', title: 'Vote Failed', description: result.message });
+        }
+        setIsVotingPost(false);
+    };
 
     const handleCommentSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -101,16 +140,20 @@ const PostPage = () => {
                 </Avatar>
                 <span>Posted by {post.authorName}</span>
                 <span>&middot;</span>
-                <span>{post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Just now'}</span>
+                <span>{post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}</span>
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-4">{post.title}</h1>
             <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
 
             <div className="flex items-center gap-4 mt-6 pt-4 border-t">
                 <div className="flex items-center gap-1 text-muted-foreground">
-                    <Button variant="ghost" size="sm"><ThumbsUp className="h-4 w-4" /></Button>
-                    <span className="text-sm font-bold">{post.upvotes - post.downvotes}</span>
-                    <Button variant="ghost" size="sm"><ThumbsDown className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => onVotePost('up')} disabled={isVotingPost} className={cn(postVote === 'up' && 'bg-primary/10 text-primary')}>
+                        <ThumbsUp className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-bold">{postScore}</span>
+                    <Button variant="ghost" size="sm" onClick={() => onVotePost('down')} disabled={isVotingPost} className={cn(postVote === 'down' && 'bg-destructive/10 text-destructive')}>
+                        <ThumbsDown className="h-4 w-4" />
+                    </Button>
                 </div>
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                     <MessageSquare className="h-4 w-4" />
