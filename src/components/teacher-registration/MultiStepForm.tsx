@@ -37,12 +37,12 @@ export default function MultiStepForm() {
         dateOfBirth: '',
         country: '',
         timezone: '',
+        preferredLanguage: [],
         bio: '',
         headline: '',
         areasOfExpertise: [],
         linkedinUrl: '',
         websiteUrl: '',
-        preferredLanguage: [],
     }
   });
 
@@ -93,7 +93,7 @@ export default function MultiStepForm() {
     toast({
       variant: "destructive",
       title: "Validation Error",
-      description: "Please check all fields for errors. Some information may be missing or invalid.",
+      description: "Please review the form for errors. Some fields may be incomplete or invalid.",
     });
   };
 
@@ -101,7 +101,7 @@ export default function MultiStepForm() {
     <FormProvider {...methods}>
       <div className="bg-card p-8 rounded-xl border">
         <StepIndicator steps={steps} currentStep={currentStep} />
-        <form onSubmit={methods.handleSubmit(onSubmit, onError)} className="space-y-8 mt-8">
+        <form onSubmit={methods.handleSubmit(onSubmit, onError)} className="mt-8">
           
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
             <Step1Personal />
