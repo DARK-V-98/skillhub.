@@ -181,7 +181,7 @@ export const teacherRegistrationSchema = z.object({
   fullName: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be in YYYY-MM-DD format.'),
   country: z.string().min(2, 'Please select a country'),
   timezone: z.string().min(2, 'Please select a timezone'),
   preferredLanguage: z.array(z.string()).min(1, 'Please select at least one language'),
