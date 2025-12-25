@@ -93,7 +93,7 @@ export default function MultiStepForm() {
     toast({
       variant: "destructive",
       title: "Validation Error",
-      description: "Please check the form for errors. See the console for details.",
+      description: "Please check all fields for errors. Some information may be missing or invalid.",
     });
   };
 
