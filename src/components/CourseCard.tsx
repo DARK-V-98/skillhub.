@@ -30,6 +30,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   };
 
   const studentProgress = showProgress && course.progress && course.progress[Object.keys(course.progress)[0]] || 0;
+  const studentCount = Array.isArray(course.students) ? course.students.length : 0;
 
   return (
     <div
@@ -81,7 +82,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{course.students.length.toLocaleString()}</span>
+            <span>{studentCount.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
