@@ -253,6 +253,12 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
+                    <Link href="/dashboard/profile">
+                      <User className="h-4 w-4 mr-2" />
+                      My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer btn-touch-target">
                     <Link href="/dashboard/settings">
                       <Settings className="h-4 w-4 mr-2" />
                       Profile & Settings

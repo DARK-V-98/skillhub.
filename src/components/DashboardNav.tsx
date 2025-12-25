@@ -13,6 +13,7 @@ import {
   Heart,
   Shield,
   TrendingUp,
+  User as UserIcon,
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { cn } from '@/lib/utils';
@@ -33,7 +34,7 @@ const studentNav: NavItem[] = [
   { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/live-classes' },
   { id: 'study-rooms', label: 'Study Rooms', icon: Users, href: '/dashboard/study-rooms' },
   { id: 'community', label: 'Community', icon: MessageSquare, href: '/dashboard/community' },
-  { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
+  { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
 
 const teacherNav: NavItem[] = [
@@ -43,7 +44,7 @@ const teacherNav: NavItem[] = [
   { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/teacher/live-classes' },
   { id: 'students', label: 'Students', icon: Users, href: '/dashboard/students' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/dashboard/analytics' },
-  { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
+  { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
 
 const sponsorNav: NavItem[] = [
@@ -51,7 +52,7 @@ const sponsorNav: NavItem[] = [
     { id: 'scholarships', label: 'Scholarships', icon: GraduationCap, href: '/dashboard/scholarships' },
     { id: 'beneficiaries', label: 'Beneficiaries', icon: Users, href: '/dashboard/beneficiaries' },
     { id: 'impact', label: 'Impact', icon: Heart, href: '/dashboard/impact' },
-    { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
+    { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
   
 const adminNav: NavItem[] = [
@@ -60,7 +61,7 @@ const adminNav: NavItem[] = [
     { id: 'courses', label: 'Courses', icon: BookOpen, href: '/dashboard/courses' },
     { id: 'sponsors', label: 'Sponsors', icon: GraduationCap, href: '/dashboard/sponsors' },
     { id: 'moderation', label: 'Moderation', icon: Shield, href: '/dashboard/moderation' },
-    { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
+    { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
 
 

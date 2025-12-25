@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
-import { Loader2, Home, BookOpen, Video, MessageSquare, Settings, Users } from 'lucide-react';
+import { Loader2, Home, BookOpen, Video, MessageSquare, Settings, Users, User as UserIcon, TrendingUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import DashboardNav from '@/components/DashboardNav';
 import Footer from '@/components/footer';
@@ -57,10 +57,11 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
     { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
+    { id: 'my-progress', label: 'My Progress', icon: TrendingUp, href: '/dashboard/my-progress' },
     { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/live-classes' },
     { id: 'study-rooms', label: 'Study Rooms', icon: Users, href: '/dashboard/study-rooms' },
     { id: 'community', label: 'Community', icon: MessageSquare, href: '/dashboard/community' },
-    { id: 'settings', label: 'Profile', icon: Settings, href: '/dashboard/settings' },
+    { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
   ];
 
   return (
