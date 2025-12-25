@@ -55,6 +55,18 @@
             },
             "required": ["id", "title", "lessons"]
         },
+        "studentProgress": {
+            "title": "Student Progress",
+            "description": "Tracks a student's progress within a course.",
+            "type": "object",
+            "properties": {
+                "progress": { "type": "number" },
+                "score": { "type": "number" },
+                "timeSpent": { "type": "number", "description": "in minutes" },
+                "completedLessons": { "type": "number" }
+            },
+            "required": ["progress", "completedLessons"]
+        },
         "course": {
             "title": "Course",
             "description": "Represents an educational course.",
@@ -67,7 +79,10 @@
                 "thumbnail": { "type": "string", "format": "uri" },
                 "rating": { "type": "number" },
                 "students": { "type": "array", "items": { "type": "string" } },
-                "progress": { "type": "object" },
+                "progress": { 
+                    "type": "object",
+                    "additionalProperties": { "$ref": "#/entities/studentProgress" }
+                },
                 "price": { "type": "number" },
                 "duration": { "type": "string" },
                 "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"] },
