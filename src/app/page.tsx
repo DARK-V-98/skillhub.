@@ -83,7 +83,7 @@ const sentence = {
     opacity: 1,
     transition: {
       delay: 0.5,
-      staggerChildren: 0.1,
+      staggerChildren: 0.04,
     },
   },
 };
@@ -134,13 +134,13 @@ export default function HomePage() {
               className="text-4xl md:text-6xl font-extrabold tracking-tight text-gradient mb-6"
               variants={sentence}
             >
-              {heroText.split(" ").map((word, index) => (
+              {heroText.split("").map((char, index) => (
                 <motion.span
-                  key={word + "-" + index}
+                  key={char + "-" + index}
                   className="inline-block"
                   variants={letter}
                 >
-                  {word}&nbsp;
+                  {char}
                 </motion.span>
               ))}
             </motion.h1>
