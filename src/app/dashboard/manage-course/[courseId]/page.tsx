@@ -26,7 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
-import { doc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { Loader2, BookOpen, ArrowLeft, PlusCircle, GripVertical, Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
@@ -240,24 +240,42 @@ function CurriculumBuilder({ courseId, course }: { courseId: string; course: Cou
     const { toast } = useToast();
     const [newModuleTitle, setNewModuleTitle] = useState('');
     const [newLessonTitles, setNewLessonTitles] = useState<{ [key: string]: string }>({});
+    const [expandedLessons, setExpandedLessons] = useState<{ [key: string]: boolean }>({});
+    const [lessonContents, setLessonContents] = useState<{ [key: string]: { type: Lesson['type']; content: string } }>({});
+
+    // Pre-fill lesson contents when course data loads
+    React.useEffect(() => {
+        const initialContents: { [key: string]: { type: Lesson['type']; content: string } } = {};
+        course.modules?.forEach(module => {
+            module.lessons?.forEach(lesson => {
+                initialContents[lesson.id] = { type: lesson.type, content: lesson.content };
+            });
+        });
+        setLessonContents(initialContents);
+    }, [course]);
+
+    const handleUpdateModules = async (updatedModules: Module[]) => {
+        if (!firestore) return;
+        const courseRef = doc(firestore, 'courses', courseId);
+        await setDoc(courseRef, { modules: updatedModules }, { merge: true });
+    };
 
     const handleAddModule = async () => {
-        if (!firestore || !newModuleTitle.trim()) return;
-        const courseRef = doc(firestore, 'courses', courseId);
+        if (!newModuleTitle.trim()) return;
         const newModule: Module = {
             id: new Date().getTime().toString(),
             title: newModuleTitle,
             lessons: [],
         };
-        await updateDoc(courseRef, { modules: arrayUnion(newModule) });
+        const updatedModules = [...(course.modules || []), newModule];
+        await handleUpdateModules(updatedModules);
         setNewModuleTitle('');
         toast({ title: 'Module added successfully' });
     };
 
     const handleAddLesson = async (moduleId: string) => {
-        if (!firestore || !newLessonTitles[moduleId]?.trim() || !course.modules) return;
+        if (!newLessonTitles[moduleId]?.trim() || !course.modules) return;
 
-        const courseRef = doc(firestore, 'courses', courseId);
         const newLesson: Lesson = {
             id: new Date().getTime().toString(),
             title: newLessonTitles[moduleId],
@@ -272,31 +290,64 @@ function CurriculumBuilder({ courseId, course }: { courseId: string; course: Cou
             return module;
         });
 
-        await setDoc(courseRef, { modules: updatedModules }, { merge: true });
-
+        await handleUpdateModules(updatedModules);
         setNewLessonTitles(prev => ({ ...prev, [moduleId]: '' }));
         toast({ title: 'Lesson added successfully' });
     };
 
     const handleDeleteModule = async (moduleId: string) => {
-        if (!firestore || !course.modules) return;
-        const courseRef = doc(firestore, 'courses', courseId);
+        if (!course.modules) return;
         const updatedModules = course.modules.filter(m => m.id !== moduleId);
-        await updateDoc(courseRef, { modules: updatedModules });
+        await handleUpdateModules(updatedModules);
         toast({ title: 'Module deleted successfully' });
     };
 
     const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
-        if (!firestore || !course.modules) return;
-        const courseRef = doc(firestore, 'courses', courseId);
+        if (!course.modules) return;
         const updatedModules = course.modules.map(module => {
             if (module.id === moduleId) {
                 return { ...module, lessons: module.lessons.filter(l => l.id !== lessonId) };
             }
             return module;
         });
-        await updateDoc(courseRef, { modules: updatedModules });
+        await handleUpdateModules(updatedModules);
         toast({ title: 'Lesson deleted successfully' });
+    };
+
+    const handleLessonDetailChange = (lessonId: string, field: 'type' | 'content', value: string) => {
+        setLessonContents(prev => ({
+            ...prev,
+            [lessonId]: {
+                ...prev[lessonId],
+                [field]: value
+            }
+        }));
+    };
+
+    const handleSaveLesson = async (moduleId: string, lessonId: string) => {
+        if (!course.modules) return;
+
+        const updatedModules = course.modules.map(module => {
+            if (module.id === moduleId) {
+                return {
+                    ...module,
+                    lessons: module.lessons.map(lesson => {
+                        if (lesson.id === lessonId) {
+                            return {
+                                ...lesson,
+                                type: lessonContents[lessonId].type,
+                                content: lessonContents[lessonId].content
+                            };
+                        }
+                        return lesson;
+                    })
+                };
+            }
+            return module;
+        });
+        await handleUpdateModules(updatedModules);
+        setExpandedLessons(prev => ({...prev, [lessonId]: false}));
+        toast({ title: 'Lesson saved!' });
     };
 
     return (
@@ -325,14 +376,53 @@ function CurriculumBuilder({ courseId, course }: { courseId: string; course: Cou
                             <AccordionContent className="pl-8 pb-4">
                                 <div className="space-y-3">
                                     {module.lessons?.map(lesson => (
-                                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-background rounded-md border group">
-                                            <div className="flex items-center gap-3">
-                                                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                                                <span>{lesson.title}</span>
+                                        <div key={lesson.id} className="bg-background rounded-md border">
+                                            <div className="flex items-center justify-between p-3 group">
+                                                <div className="flex items-center gap-3">
+                                                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                                                    <button onClick={() => setExpandedLessons(prev => ({...prev, [lesson.id]: !prev[lesson.id]}))} className="text-left font-medium hover:underline">
+                                                        {lesson.title}
+                                                    </button>
+                                                </div>
+                                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100" onClick={() => handleDeleteLesson(module.id, lesson.id)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
                                             </div>
-                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100" onClick={() => handleDeleteLesson(module.id, lesson.id)}>
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {expandedLessons[lesson.id] && lessonContents[lesson.id] && (
+                                                <div className="p-4 border-t space-y-4">
+                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div className='md:col-span-1'>
+                                                            <Label>Lesson Type</Label>
+                                                            <Select
+                                                                value={lessonContents[lesson.id].type}
+                                                                onValueChange={(value: Lesson['type']) => handleLessonDetailChange(lesson.id, 'type', value)}
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select type" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="text">Text</SelectItem>
+                                                                    <SelectItem value="video">Video</SelectItem>
+                                                                    <SelectItem value="quiz">Quiz</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        <div className='md:col-span-2'>
+                                                             <Label>Content</Label>
+                                                             <Input
+                                                                value={lessonContents[lesson.id].content}
+                                                                onChange={(e) => handleLessonDetailChange(lesson.id, 'content', e.target.value)}
+                                                                placeholder={
+                                                                    lessonContents[lesson.id].type === 'video' ? "Enter video URL" :
+                                                                    lessonContents[lesson.id].type === 'quiz' ? "Enter Quiz ID" :
+                                                                    "Enter content..."
+                                                                }
+                                                            />
+                                                        </div>
+                                                     </div>
+                                                    <Button size="sm" onClick={() => handleSaveLesson(module.id, lesson.id)}>Save Lesson</Button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                     <div className="flex gap-2 pt-2">
