@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Video, Users, Clock, Calendar } from 'lucide-react';
@@ -19,39 +20,44 @@ const LiveClassCard: React.FC<LiveClassCardProps> = ({
 }) => {
   const [countdown, setCountdown] = useState('');
   const [isLive, setIsLive] = useState(false);
+  const [isPast, setIsPast] = useState(false);
 
   const startTime = React.useMemo(() => new Date(liveClass.startTime), [liveClass.startTime]);
 
   useEffect(() => {
-    const updateCountdown = () => {
+    const interval = setInterval(() => {
       const now = new Date();
       const diff = startTime.getTime() - now.getTime();
+      const endTime = new Date(startTime.getTime() + liveClass.duration * 60000);
 
-      if (diff <= 0) {
+      if (now >= startTime && now <= endTime) {
         setCountdown('Live Now');
         setIsLive(true);
-        return;
-      }
-
-      setIsLive(false);
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      if (hours > 24) {
-        const days = Math.floor(hours / 24);
-        setCountdown(`${days}d ${hours % 24}h`);
-      } else if (hours > 0) {
-        setCountdown(`${hours}h ${minutes}m`);
+        setIsPast(false);
+      } else if (now > endTime) {
+        setCountdown('Class ended');
+        setIsLive(false);
+        setIsPast(true);
+        clearInterval(interval);
       } else {
-        setCountdown(`${minutes}m ${seconds}s`);
-      }
-    };
+        setIsLive(false);
+        setIsPast(false);
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+        if (hours > 24) {
+          const days = Math.floor(hours / 24);
+          setCountdown(`${days}d ${hours % 24}h`);
+        } else if (hours > 0) {
+          setCountdown(`${hours}h ${minutes}m`);
+        } else {
+          setCountdown(`${minutes}m ${seconds}s`);
+        }
+      }
+    }, 1000);
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, liveClass.duration]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -74,6 +80,7 @@ const LiveClassCard: React.FC<LiveClassCardProps> = ({
       className={cn(
         'bg-card rounded-xl border border-border p-4 card-hover',
         isLive && 'ring-2 ring-destructive',
+        isPast && 'opacity-60',
         className
       )}
     >
@@ -85,6 +92,8 @@ const LiveClassCard: React.FC<LiveClassCardProps> = ({
                 <span className="h-2 w-2 rounded-full bg-destructive-foreground mr-1" />
                 LIVE
               </Badge>
+            ) : isPast ? (
+              <Badge variant="secondary">Concluded</Badge>
             ) : (
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 Upcoming
@@ -115,11 +124,12 @@ const LiveClassCard: React.FC<LiveClassCardProps> = ({
         <div className="flex flex-col items-end gap-2">
           <div className="text-right">
             <p className="text-xs text-muted-foreground">
-              {isLive ? 'Happening now' : 'Starts in'}
+              {isLive ? 'Happening now' : isPast ? 'Ended' : 'Starts in'}
             </p>
             <p className={cn(
               'text-lg font-bold',
-              isLive ? 'text-destructive' : 'text-primary'
+              isLive ? 'text-destructive' : 'text-primary',
+              isPast && 'text-muted-foreground'
             )}>
               {countdown}
             </p>
@@ -128,12 +138,15 @@ const LiveClassCard: React.FC<LiveClassCardProps> = ({
             onClick={onJoin}
             className="btn-touch-target"
             variant={isLive ? 'default' : 'outline'}
+            disabled={isPast}
           >
             {isLive ? (
               <>
                 <Video className="h-4 w-4 mr-2" />
                 Join Now
               </>
+            ) : isPast ? (
+              'View Recording'
             ) : (
               <>
                 <Calendar className="h-4 w-4 mr-2" />

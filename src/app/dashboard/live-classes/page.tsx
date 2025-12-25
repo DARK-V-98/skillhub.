@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import LiveClassCard from '@/components/LiveClassCard';
@@ -15,6 +16,20 @@ export default function LiveClassesPage() {
     firestore ? query(collection(firestore, 'liveClasses'), orderBy('startTime', 'asc')) : null
   );
 
+  const now = new Date();
+  
+  const upcomingClasses = liveClasses?.filter(c => new Date(c.startTime) > now) || [];
+  const liveNow = liveClasses?.filter(c => {
+      const startTime = new Date(c.startTime);
+      const endTime = new Date(startTime.getTime() + c.duration * 60000);
+      return now >= startTime && now <= endTime;
+  }) || [];
+  const pastClasses = liveClasses?.filter(c => {
+      const startTime = new Date(c.startTime);
+      const endTime = new Date(startTime.getTime() + c.duration * 60000);
+      return now > endTime;
+  }) || [];
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -22,10 +37,6 @@ export default function LiveClassesPage() {
       </div>
     );
   }
-  
-  const upcomingClasses = liveClasses?.filter(c => new Date(c.startTime) > new Date()) || [];
-  const liveNow = liveClasses?.filter(c => new Date(c.startTime) <= new Date() && c.isLive) || [];
-  const pastClasses = liveClasses?.filter(c => new Date(c.startTime) < new Date() && !c.isLive) || [];
 
   return (
     <>
