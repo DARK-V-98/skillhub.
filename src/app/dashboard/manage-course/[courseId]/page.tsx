@@ -26,9 +26,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { Loader2, BookOpen, ArrowLeft, PlusCircle, GripVertical, Trash2 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { Course, Module, Lesson } from '@/lib/types';
 import Link from 'next/link';
@@ -56,7 +56,15 @@ function CourseDetailsForm({ courseId }: { courseId: string }) {
   
     const form = useForm<z.infer<typeof courseSchema>>({
       resolver: zodResolver(courseSchema),
-      defaultValues: {
+      values: course ? {
+        title: course.title,
+        description: course.description,
+        category: course.category,
+        level: course.level,
+        price: course.price,
+        duration: course.duration,
+        thumbnail: course.thumbnail,
+      } : {
         title: '',
         description: '',
         category: '',
