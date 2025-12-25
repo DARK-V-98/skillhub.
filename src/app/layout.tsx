@@ -7,6 +7,7 @@ import { RoleProvider } from '@/contexts/RoleContext';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import AccessibilityPanel from '@/components/AccessibilityPanel';
 import AppLoader from '@/components/AppLoader';
+import HelpChatWidget from '@/components/help-chat/HelpChatWidget';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const openSans = Open_Sans({ 
@@ -35,6 +36,7 @@ export default function RootLayout({
                 {children}
                 <Toaster />
                 <AccessibilityPanel />
+                <HelpChatWidget />
                 </RoleProvider>
             </AccessibilityProvider>
             </FirebaseClientProvider>

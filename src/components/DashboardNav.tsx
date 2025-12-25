@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { 
@@ -16,7 +17,8 @@ import {
   User as UserIcon,
   Trophy,
   BookText,
-  FileText
+  FileText,
+  LifeBuoy
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { cn } from '@/lib/utils';
@@ -67,6 +69,7 @@ export const adminNav: NavItem[] = [
     { id: 'blog', label: 'Blog', icon: BookText, href: '/dashboard/blog' },
     { id: 'sponsors', label: 'Sponsors', icon: GraduationCap, href: '/dashboard/sponsors' },
     { id: 'moderation', label: 'Moderation', icon: Shield, href: '/dashboard/moderation' },
+    { id: 'help-center', label: 'Help Center', icon: LifeBuoy, href: '/dashboard/help-center' },
     { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
 

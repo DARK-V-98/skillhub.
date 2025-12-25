@@ -199,3 +199,24 @@ export type StudentData = UserProfile & {
   studentId: string;
   courseTitle: string;
 };
+
+export interface HelpChat {
+  id: string;
+  userId?: string;
+  guestInfo?: { name: string; email: string };
+  status: 'pending' | 'active' | 'closed';
+  adminId?: string;
+  adminName?: string;
+  createdAt: any;
+  updatedAt: any;
+  lastMessage?: string;
+}
+
+export interface HelpChatMessage {
+  id: string;
+  chatId: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  createdAt: any;
+}

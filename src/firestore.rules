@@ -140,5 +140,17 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']);
       allow update: if isOneOfRoles(request.auth.uid, ['admin', 'developer']);
     }
+
+    match /helpChats/{chatId} {
+      allow read: if (isSignedIn() && (isOwner(resource.data.userId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']))) ||
+                    (!isSignedIn() && resource.data.userId == null);
+      allow create: true;
+      allow update: if (isSignedIn() && (isOwner(resource.data.userId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']))) ||
+                      (!isSignedIn() && resource.data.userId == null);
+    }
+
+    match /helpChats/{chatId}/messages/{messageId} {
+      allow read, create: true;
+    }
   }
 }
