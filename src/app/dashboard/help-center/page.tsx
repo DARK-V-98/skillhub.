@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection, query, orderBy, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import AdminChatWindow from '@/components/help-chat/AdminChatWindow';
 import { useUser } from '@/firebase/auth/use-user';
+import { Button } from '@/components/ui/button';
 
 export default function HelpCenterPage() {
   const firestore = useFirestore();
