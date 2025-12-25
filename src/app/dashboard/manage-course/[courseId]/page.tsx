@@ -56,6 +56,15 @@ function CourseDetailsForm({ courseId }: { courseId: string }) {
   
     const form = useForm<z.infer<typeof courseSchema>>({
       resolver: zodResolver(courseSchema),
+      defaultValues: {
+        title: '',
+        description: '',
+        category: '',
+        level: 'Beginner',
+        price: 0,
+        duration: '',
+        thumbnail: '',
+      },
     });
   
     React.useEffect(() => {
@@ -534,3 +543,5 @@ export default function ManageCoursePage() {
     </div>
   );
 }
+
+    
