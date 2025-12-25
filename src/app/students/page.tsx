@@ -6,16 +6,14 @@ import { useUser } from '@/firebase/auth/use-user';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
-export default function TeachersPage() {
+export default function StudentsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login?redirect=/teachers');
+      router.push('/login?redirect=/students');
     }
   }, [user, loading, router]);
 
@@ -32,13 +30,11 @@ export default function TeachersPage() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="text-center">
-          <h1 className="text-4xl font-bold">Welcome, Future Instructor!</h1>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Ready to share your knowledge? Complete our registration process to start creating courses and earning.
+          <h1 className="text-4xl font-bold">Welcome, Student!</h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            This is where you'll select your package and start your learning journey.
           </p>
-          <Button asChild size="lg" className="mt-8">
-            <Link href="/register/teacher">Start Teacher Registration</Link>
-          </Button>
+          {/* Package selection UI will go here */}
         </div>
       </main>
       <Footer />

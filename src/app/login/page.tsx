@@ -1,19 +1,22 @@
+
 'use client';
 import { AuthForm } from '@/components/AuthForm';
 import { useUser } from '@/firebase/auth/use-user';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const { user, loading } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
 
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      router.push(redirect || '/dashboard');
     }
-  }, [user, router]);
+  }, [user, router, redirect]);
 
   if (loading || user) {
     return (

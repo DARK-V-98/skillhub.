@@ -6,16 +6,15 @@ import { useUser } from '@/firebase/auth/use-user';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import SponsorForm from '@/components/SponsorForm';
 
-export default function TeachersPage() {
+export default function SponsorsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login?redirect=/teachers');
+      router.push('/login?redirect=/sponsors');
     }
   }, [user, loading, router]);
 
@@ -31,14 +30,14 @@ export default function TeachersPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold">Welcome, Future Instructor!</h1>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Ready to share your knowledge? Complete our registration process to start creating courses and earning.
+        <div className="text-center max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold">Become a Sponsor</h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Make an impact by funding scholarships and empowering the next generation of talent. Fill out the form below to get in touch with our partnerships team.
           </p>
-          <Button asChild size="lg" className="mt-8">
-            <Link href="/register/teacher">Start Teacher Registration</Link>
-          </Button>
+        </div>
+        <div className="max-w-xl mx-auto mt-12">
+            <SponsorForm />
         </div>
       </main>
       <Footer />

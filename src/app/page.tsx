@@ -5,10 +5,6 @@ import { Card } from '@/components/ui/card';
 import { CheckCircle, Video, PenTool, TrendingUp, Shield, GraduationCap, Code, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import StudentForm from '@/components/StudentForm';
-import TeacherForm from '@/components/TeacherForm';
-import SponsorForm from '@/components/SponsorForm';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { motion } from 'framer-motion';
@@ -327,9 +323,9 @@ export default function HomePage() {
               variants={stagger}
             >
               {[
-                { title: "For Students", img: "/st.png", list: ["Live, Interactive Sessions", "Personalized Learning Paths", "Peer-to-Peer Collaboration"], btn: "Explore Courses", Form: StudentForm, formTitle: "Start Your Learning Journey", formDesc: "Sign up to explore our wide range of courses." },
-                { title: "For Teachers", img: "/te.png", list: ["Content Monetization", "Powerful Authoring Tools", "Audience Engagement Analytics"], btn: "Become A Teacher", Form: TeacherForm, formTitle: "Become a Teacher", formDesc: "Share your knowledge and start earning today." },
-                { title: "For Sponsors", img: "/sp.png", list: ["Fund Scholarships", "Brand Visibility", "Impact Reporting"], btn: "Become a Sponsor", Form: SponsorForm, formTitle: "Become a Sponsor", formDesc: "Make an impact and empower the next generation of learners." }
+                { title: "For Students", img: "/st.png", list: ["Live, Interactive Sessions", "Personalized Learning Paths", "Peer-to-Peer Collaboration"], btn: "Explore Courses", href: "/students" },
+                { title: "For Teachers", img: "/te.png", list: ["Content Monetization", "Powerful Authoring Tools", "Audience Engagement Analytics"], btn: "Become A Teacher", href: "/teachers" },
+                { title: "For Sponsors", img: "/sp.png", list: ["Fund Scholarships", "Brand Visibility", "Impact Reporting"], btn: "Become a Sponsor", href: "/sponsors" }
               ].map((role, i) => (
                 <motion.div key={i} variants={fadeInUp} whileHover={{ y: -5, transition: { duration: 0.2 } }}>
                   <Card className="overflow-hidden card-hover h-full flex flex-col">
@@ -343,18 +339,9 @@ export default function HomePage() {
                           <li key={j} className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" /> {item}</li>
                         ))}
                       </ul>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" className="mt-6 w-full">{role.btn}</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>{role.formTitle}</DialogTitle>
-                            <DialogDescription>{role.formDesc}</DialogDescription>
-                          </DialogHeader>
-                          <role.Form />
-                        </DialogContent>
-                      </Dialog>
+                      <Button variant="outline" className="mt-6 w-full" asChild>
+                        <Link href={role.href}>{role.btn}</Link>
+                      </Button>
                     </div>
                   </Card>
                 </motion.div>
