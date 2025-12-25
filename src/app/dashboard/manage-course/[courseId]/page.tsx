@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -26,11 +27,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
 import { doc, setDoc } from 'firebase/firestore';
-import { Loader2, BookOpen, ArrowLeft } from 'lucide-react';
+import { Loader2, BookOpen, ArrowLeft, PlusCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { Course } from '@/lib/types';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const courseSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -42,104 +45,69 @@ const courseSchema = z.object({
   thumbnail: z.string().url('Please enter a valid image URL.'),
 });
 
-export default function ManageCoursePage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const { toast } = useToast();
-  const router = useRouter();
-  const params = useParams();
-  const courseId = params.courseId as string;
-
-  const courseRef = firestore && courseId ? doc(firestore, 'courses', courseId) : null;
-  const { data: course, loading: courseLoading } = useDoc<Course>(courseRef);
-
-  const form = useForm<z.infer<typeof courseSchema>>({
-    resolver: zodResolver(courseSchema),
-  });
-
-  React.useEffect(() => {
-    if (course) {
-      form.reset(course);
-    }
-  }, [course, form]);
-
-
-  const { isSubmitting } = form.formState;
-
-  async function onSubmit(values: z.infer<typeof courseSchema>) {
-    if (!user || !firestore || !course) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Authentication error or course not found.',
-      });
-      return;
-    }
-
-    if (course.instructorId !== user.uid) {
+function CourseDetailsForm({ courseId }: { courseId: string }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const router = useRouter();
+    
+    const courseRef = firestore && courseId ? doc(firestore, 'courses', courseId) : null;
+    const { data: course, loading: courseLoading } = useDoc<Course>(courseRef);
+  
+    const form = useForm<z.infer<typeof courseSchema>>({
+      resolver: zodResolver(courseSchema),
+    });
+  
+    React.useEffect(() => {
+      if (course) {
+        form.reset(course);
+      }
+    }, [course, form]);
+  
+    const { isSubmitting } = form.formState;
+  
+    async function onSubmit(values: z.infer<typeof courseSchema>) {
+      if (!user || !firestore || !course) {
         toast({
           variant: 'destructive',
-          title: 'Permission Denied',
-          description: "You don't have permission to edit this course.",
+          title: 'Error',
+          description: 'Authentication error or course not found.',
         });
         return;
       }
-
-    try {
-      await setDoc(doc(firestore, 'courses', courseId), values, { merge: true });
-      toast({
-        title: 'Success!',
-        description: 'Your course has been updated.',
-      });
-      router.push('/dashboard/my-courses');
-    } catch (error) {
-      console.error('Error updating course:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'There was an issue updating your course. Please try again.',
-      });
+  
+      if (course.instructorId !== user.uid) {
+          toast({
+            variant: 'destructive',
+            title: 'Permission Denied',
+            description: "You don't have permission to edit this course.",
+          });
+          return;
+      }
+  
+      try {
+        await setDoc(doc(firestore, 'courses', courseId), values, { merge: true });
+        toast({
+          title: 'Success!',
+          description: 'Your course has been updated.',
+        });
+      } catch (error) {
+        console.error('Error updating course:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'There was an issue updating your course. Please try again.',
+        });
+      }
     }
-  }
 
-  if (courseLoading) {
+    if (courseLoading) {
+        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+    }
+
     return (
-      <div className="flex justify-center items-center h-96">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!course) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-destructive">Course Not Found</h2>
-        <p className="text-muted-foreground mt-2">
-          The course you are looking for does not exist.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div>
-                <Button variant="ghost" className="mb-4" asChild>
-                    <Link href="/dashboard/my-courses"><ArrowLeft className="h-4 w-4 mr-2" /> Back to My Courses</Link>
-                </Button>
-                <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                    <BookOpen className="h-8 w-8 text-primary" />
-                    Manage Course
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                    Edit the details for your course: {course.title}.
-                </p>
-            </div>
-        </div>
-
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl mx-auto">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
                 control={form.control}
                 name="title"
@@ -264,6 +232,108 @@ export default function ManageCoursePage() {
             </Button>
             </form>
         </Form>
-    </>
+    )
+}
+
+function CurriculumBuilder() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Curriculum Builder</CardTitle>
+                <CardDescription>
+                    Organize your course content into modules and lessons. Drag and drop to reorder.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <h3 className="text-lg font-medium">Your curriculum is empty.</h3>
+                    <p className="text-muted-foreground mt-1 text-sm">Add your first module or lesson to get started.</p>
+                    <Button className="mt-4">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Module
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function CourseSettings() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Course Settings</CardTitle>
+                <CardDescription>Manage publishing status, collaborators, and other advanced options.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <h3 className="text-lg font-medium">Advanced settings are coming soon.</h3>
+                    <p className="text-muted-foreground mt-1 text-sm">Manage course publication, collaborators, and more.</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+
+export default function ManageCoursePage() {
+  const params = useParams();
+  const courseId = params.courseId as string;
+  const firestore = useFirestore();
+  
+  const courseRef = firestore && courseId ? doc(firestore, 'courses', courseId) : null;
+  const { data: course, loading: courseLoading } = useDoc<Course>(courseRef);
+
+  if (courseLoading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold text-destructive">Course Not Found</h2>
+        <p className="text-muted-foreground mt-2">
+          The course you are looking for does not exist.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+        <div>
+            <Button variant="ghost" className="mb-4" asChild>
+                <Link href="/dashboard/my-courses"><ArrowLeft className="h-4 w-4 mr-2" /> Back to My Courses</Link>
+            </Button>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                <BookOpen className="h-8 w-8 text-primary" />
+                Manage: {course.title}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+                Edit details, build your curriculum, and manage settings.
+            </p>
+        </div>
+
+        <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="mt-6">
+                <CourseDetailsForm courseId={courseId} />
+            </TabsContent>
+            <TabsContent value="curriculum" className="mt-6">
+                <CurriculumBuilder />
+            </TabsContent>
+            <TabsContent value="settings" className="mt-6">
+                <CourseSettings />
+            </TabsContent>
+        </Tabs>
+    </div>
   );
 }
