@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const MyProgressPage: React.FC = () => {
   const { user, loading: userLoading } = useUser();
