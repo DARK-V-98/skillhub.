@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import { 
@@ -16,7 +15,8 @@ import {
   TrendingUp,
   User as UserIcon,
   Trophy,
-  BookText
+  BookText,
+  FileText
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { cn } from '@/lib/utils';
@@ -63,6 +63,7 @@ export const adminNav: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
     { id: 'users', label: 'Users', icon: Users, href: '/dashboard/users' },
     { id: 'courses', label: 'Courses', icon: BookOpen, href: '/dashboard/courses' },
+    { id: 'teacher-applications', label: 'Applications', icon: FileText, href: '/dashboard/teacher-applications' },
     { id: 'blog', label: 'Blog', icon: BookText, href: '/dashboard/blog' },
     { id: 'sponsors', label: 'Sponsors', icon: GraduationCap, href: '/dashboard/sponsors' },
     { id: 'moderation', label: 'Moderation', icon: Shield, href: '/dashboard/moderation' },

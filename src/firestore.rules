@@ -37,7 +37,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read;
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']);
     }
     
     match /courses/{courseId} {
@@ -136,7 +136,8 @@ service cloud.firestore {
     }
 
     match /teacherApplications/{userId} {
-      allow read, create: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow read: if isOwner(userId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']);
       allow update: if isOneOfRoles(request.auth.uid, ['admin', 'developer']);
     }
   }
