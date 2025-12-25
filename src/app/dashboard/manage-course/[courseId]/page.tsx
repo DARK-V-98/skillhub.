@@ -35,7 +35,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import VideoConference from '@/components/VideoConference';
+import CourseChat from '@/components/CourseChat';
 
 const courseSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -528,11 +528,10 @@ export default function ManageCoursePage() {
             </TabsContent>
             <TabsContent value="chat" className="mt-6">
                  <div className="h-[70vh] rounded-lg border overflow-hidden">
-                    <VideoConference room={course} collectionName="courses" />
+                    <CourseChat course={course} />
                  </div>
             </TabsContent>
         </Tabs>
     </div>
   );
 }
-

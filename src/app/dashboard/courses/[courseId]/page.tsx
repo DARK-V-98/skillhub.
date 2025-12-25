@@ -6,12 +6,13 @@ import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { Course } from '@/lib/types';
-import { Loader2, BookOpen, ArrowLeft, PlayCircle } from 'lucide-react';
+import { Loader2, BookOpen, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import VideoConference from '@/components/VideoConference';
+import { PlayCircle } from 'lucide-react';
+import CourseChat from '@/components/CourseChat';
 
 export default function StudentCoursePage() {
   const params = useParams();
@@ -84,7 +85,7 @@ export default function StudentCoursePage() {
             </TabsContent>
             <TabsContent value="chat" className="mt-6">
                 <div className="h-[70vh] rounded-lg border overflow-hidden">
-                    <VideoConference room={course} collectionName="courses" />
+                    <CourseChat course={course} />
                 </div>
             </TabsContent>
         </Tabs>
