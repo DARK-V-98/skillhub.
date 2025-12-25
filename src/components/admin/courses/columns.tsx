@@ -59,7 +59,7 @@ export const columns: ColumnDef<Course>[] = [
   {
     accessorKey: 'students',
     header: 'Enrollments',
-    cell: ({ row }) => row.original.students.length,
+    cell: ({ row }) => Array.isArray(row.original.students) ? row.original.students.length : 0,
   },
   {
     id: 'actions',
