@@ -35,6 +35,7 @@ export default function MultiStepForm() {
         fullName: '',
         email: '',
         phone: '',
+        dateOfBirth: '',
         bio: '',
         headline: '',
         areasOfExpertise: [],
