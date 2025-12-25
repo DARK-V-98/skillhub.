@@ -30,7 +30,7 @@ import { doc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Loader2, BookOpen, ArrowLeft, PlusCircle, GripVertical, Trash2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { Course, Module } from '@/lib/types';
+import { Course, Module, Lesson } from '@/lib/types';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -235,37 +235,37 @@ function CourseDetailsForm({ courseId }: { courseId: string }) {
     )
 }
 
-function CurriculumBuilder({ courseId, modules }: { courseId: string; modules?: Module[] }) {
+function CurriculumBuilder({ courseId, course }: { courseId: string; course: Course }) {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [newModuleTitle, setNewModuleTitle] = useState('');
-    const [newLessonTitles, setNewLessonTitles] = useState<{[key: string]: string}>({});
-  
+    const [newLessonTitles, setNewLessonTitles] = useState<{ [key: string]: string }>({});
+
     const handleAddModule = async () => {
-      if (!firestore || !newModuleTitle.trim()) return;
-      const courseRef = doc(firestore, 'courses', courseId);
-      const newModule = {
-        id: new Date().getTime().toString(),
-        title: newModuleTitle,
-        lessons: [],
-      };
-      await updateDoc(courseRef, { modules: arrayUnion(newModule) });
-      setNewModuleTitle('');
-      toast({ title: 'Module added successfully' });
+        if (!firestore || !newModuleTitle.trim()) return;
+        const courseRef = doc(firestore, 'courses', courseId);
+        const newModule: Module = {
+            id: new Date().getTime().toString(),
+            title: newModuleTitle,
+            lessons: [],
+        };
+        await updateDoc(courseRef, { modules: arrayUnion(newModule) });
+        setNewModuleTitle('');
+        toast({ title: 'Module added successfully' });
     };
 
     const handleAddLesson = async (moduleId: string) => {
-        if (!firestore || !newLessonTitles[moduleId]?.trim() || !modules) return;
-        
+        if (!firestore || !newLessonTitles[moduleId]?.trim() || !course.modules) return;
+
         const courseRef = doc(firestore, 'courses', courseId);
-        const newLesson = {
+        const newLesson: Lesson = {
             id: new Date().getTime().toString(),
             title: newLessonTitles[moduleId],
-            type: 'text' as const,
+            type: 'text',
             content: ''
         };
-        
-        const updatedModules = modules.map(module => {
+
+        const updatedModules = course.modules.map(module => {
             if (module.id === moduleId) {
                 return { ...module, lessons: [...(module.lessons || []), newLesson] };
             }
@@ -274,8 +274,29 @@ function CurriculumBuilder({ courseId, modules }: { courseId: string; modules?: 
 
         await setDoc(courseRef, { modules: updatedModules }, { merge: true });
 
-        setNewLessonTitles(prev => ({...prev, [moduleId]: ''}));
+        setNewLessonTitles(prev => ({ ...prev, [moduleId]: '' }));
         toast({ title: 'Lesson added successfully' });
+    };
+
+    const handleDeleteModule = async (moduleId: string) => {
+        if (!firestore || !course.modules) return;
+        const courseRef = doc(firestore, 'courses', courseId);
+        const updatedModules = course.modules.filter(m => m.id !== moduleId);
+        await updateDoc(courseRef, { modules: updatedModules });
+        toast({ title: 'Module deleted successfully' });
+    };
+
+    const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
+        if (!firestore || !course.modules) return;
+        const courseRef = doc(firestore, 'courses', courseId);
+        const updatedModules = course.modules.map(module => {
+            if (module.id === moduleId) {
+                return { ...module, lessons: module.lessons.filter(l => l.id !== lessonId) };
+            }
+            return module;
+        });
+        await updateDoc(courseRef, { modules: updatedModules });
+        toast({ title: 'Lesson deleted successfully' });
     };
 
     return (
@@ -287,31 +308,38 @@ function CurriculumBuilder({ courseId, modules }: { courseId: string; modules?: 
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <Accordion type="multiple" className="w-full" defaultValue={modules?.map(m => m.id)}>
-                    {modules?.map(module => (
-                        <AccordionItem value={module.id} key={module.id} className="bg-secondary/50 rounded-md px-4">
-                            <AccordionTrigger className="hover:no-underline">
-                                <div className="flex items-center gap-3">
-                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                    <span className="font-semibold text-lg">{module.title}</span>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pl-8">
+                <Accordion type="multiple" className="w-full" defaultValue={course.modules?.map(m => m.id)}>
+                    {course.modules?.map(module => (
+                        <AccordionItem value={module.id} key={module.id} className="bg-secondary/50 rounded-md border px-4 mb-4">
+                            <div className="flex items-center group">
+                                <AccordionTrigger className="flex-1 hover:no-underline">
+                                    <div className="flex items-center gap-3">
+                                        <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+                                        <span className="font-semibold text-lg">{module.title}</span>
+                                    </div>
+                                </AccordionTrigger>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100" onClick={() => handleDeleteModule(module.id)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                            <AccordionContent className="pl-8 pb-4">
                                 <div className="space-y-3">
                                     {module.lessons?.map(lesson => (
-                                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-background rounded-md border">
-                                             <div className="flex items-center gap-3">
-                                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-background rounded-md border group">
+                                            <div className="flex items-center gap-3">
+                                                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                                                 <span>{lesson.title}</span>
                                             </div>
-                                            <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100" onClick={() => handleDeleteLesson(module.id, lesson.id)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
                                         </div>
                                     ))}
-                                    <div className="flex gap-2">
-                                        <Input 
-                                            placeholder="New Lesson Title" 
+                                    <div className="flex gap-2 pt-2">
+                                        <Input
+                                            placeholder="New Lesson Title"
                                             value={newLessonTitles[module.id] || ''}
-                                            onChange={(e) => setNewLessonTitles(prev => ({...prev, [module.id]: e.target.value}))}
+                                            onChange={(e) => setNewLessonTitles(prev => ({ ...prev, [module.id]: e.target.value }))}
                                         />
                                         <Button onClick={() => handleAddLesson(module.id)}><PlusCircle className="mr-2 h-4 w-4" /> Add Lesson</Button>
                                     </div>
@@ -323,7 +351,7 @@ function CurriculumBuilder({ courseId, modules }: { courseId: string; modules?: 
 
                 <div className="mt-6 pt-6 border-t">
                     <div className="flex gap-2">
-                        <Input 
+                        <Input
                             placeholder="New Module Title"
                             value={newModuleTitle}
                             onChange={(e) => setNewModuleTitle(e.target.value)}
@@ -335,6 +363,7 @@ function CurriculumBuilder({ courseId, modules }: { courseId: string; modules?: 
         </Card>
     );
 }
+
 
 function CourseSettings() {
     return (
@@ -406,7 +435,7 @@ export default function ManageCoursePage() {
                 <CourseDetailsForm courseId={courseId} />
             </TabsContent>
             <TabsContent value="curriculum" className="mt-6">
-                <CurriculumBuilder courseId={courseId} modules={course.modules} />
+                <CurriculumBuilder courseId={courseId} course={course} />
             </TabsContent>
             <TabsContent value="settings" className="mt-6">
                 <CourseSettings />
