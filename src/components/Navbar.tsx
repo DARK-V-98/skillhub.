@@ -128,7 +128,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, darkMode, onDarkMod
               {userProfile?.role === 'developer' && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 btn-touch-target">
+                    <Button variant="outline" size="sm" className="flex items-center gap-2 btn-touch-target">
                       <Badge className={cn('font-normal', roleColors[activeRole])}>
                         {roleLabels[activeRole]}
                       </Badge>
