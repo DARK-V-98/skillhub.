@@ -6,8 +6,8 @@ import { MessageSquare, X, Send, Loader2, LifeBuoy } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase/provider';
-import { collection, addDoc, serverTimestamp, doc, onSnapshot, query, orderBy, updateDoc } from 'firebase/firestore';
-import { HelpChat, HelpChatMessage } from '@/lib/types';
+import { collection, addDoc, serverTimestamp, doc, onSnapshot, query, orderBy, updateDoc, getDocs, where } from 'firebase/firestore';
+import { HelpChat, HelpChatMessage, UserProfile } from '@/lib/types';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -39,10 +39,14 @@ export default function HelpChatWidget() {
       const savedChatId = localStorage.getItem(`helpChatId_${user.uid}`);
       if (savedChatId) {
         setChatId(savedChatId);
+        setHasStarted(true);
       }
     } else if (!user) {
         const guestChatId = sessionStorage.getItem('guestHelpChatId');
-        if(guestChatId) setChatId(guestChatId);
+        if(guestChatId) {
+          setChatId(guestChatId);
+          setHasStarted(true);
+        }
     }
   }, [user, chatId]);
 
@@ -100,7 +104,27 @@ export default function HelpChatWidget() {
       }
       setHasStarted(true);
 
+      // Check for online admins and send automated message
+      const usersRef = collection(firestore, 'users');
+      const adminQuery = query(usersRef, where('role', 'in', ['admin', 'developer']));
+      const adminSnapshot = await getDocs(adminQuery);
+      
+      const onlineAdmins = adminSnapshot.docs.filter(doc => (doc.data() as UserProfile).status === 'online');
+
+      if (onlineAdmins.length === 0) {
+        const messagesCol = collection(doc(firestore, 'helpChats', newChatId), 'messages');
+        await addDoc(messagesCol, {
+            chatId: newChatId,
+            senderId: 'system',
+            senderName: 'SkillHub Support',
+            text: "Thanks for reaching out! Our team is currently unavailable. Please leave your contact number (or WhatsApp number), and we'll get back to you as soon as possible.",
+            createdAt: serverTimestamp(),
+        });
+      }
+
+
     } catch (error) {
+      console.error("Error starting chat:", error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not start chat session.' });
     } finally {
       setIsLoading(false);
@@ -134,7 +158,7 @@ export default function HelpChatWidget() {
   };
 
   const renderChatContent = () => {
-    if (!hasStarted && !user) {
+    if (!chatId && !user) {
       return (
         <div className="p-4">
           <form onSubmit={startChat} className="space-y-4">
@@ -173,8 +197,14 @@ export default function HelpChatWidget() {
         <div className="flex-1 p-4 space-y-4 overflow-y-auto">
             {messages.map(msg => {
                 const isYou = msg.senderId === (user?.uid || chatId);
+                const isSystem = msg.senderId === 'system';
                 return (
-                    <div key={msg.id} className={cn("flex items-end gap-2", isYou && 'justify-end')}>
+                    <div key={msg.id} className={cn("flex items-end gap-2", isYou && 'justify-end', isSystem && 'justify-center')}>
+                       {isSystem ? (
+                         <div className="text-xs text-center text-muted-foreground bg-secondary p-2 rounded-md my-2 max-w-xs mx-auto">
+                            {msg.text}
+                         </div>
+                       ) : (
                         <div className={cn("flex flex-col gap-1 w-full max-w-xs", isYou && 'items-end')}>
                             <div className={cn("flex items-center space-x-2", isYou && 'self-end')}>
                                 <span className="text-xs font-semibold">{isYou ? 'You' : msg.senderName}</span>
@@ -186,6 +216,7 @@ export default function HelpChatWidget() {
                                 {msg.text}
                             </div>
                         </div>
+                       )}
                     </div>
                 )
             })}
@@ -208,7 +239,7 @@ export default function HelpChatWidget() {
           className="fixed bottom-24 right-6 z-50 rounded-full h-14 w-14 shadow-lg"
           aria-label="Open Help Chat"
         >
-          {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+          {isOpen ? <X className="h-6 w-6" /> : <LifeBuoy className="h-6 w-6" />}
         </Button>
       </PopoverTrigger>
       <PopoverContent side="top" align="end" className="w-80 h-96 p-0 rounded-lg overflow-hidden flex flex-col mr-2">
