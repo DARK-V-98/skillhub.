@@ -3,24 +3,18 @@ import React from 'react';
 import Image from 'next/image';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  width?: number;
   showText?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 'md' }) => {
-  const sizeClasses = {
-    sm: 32,
-    md: 40,
-    lg: 56,
-  };
-
+const Logo: React.FC<LogoProps> = ({ width = 40 }) => {
   return (
     <div className="flex items-center gap-2" role="img" aria-label="SkillHub Logo">
       <Image
         src="/logo.png"
         alt="SkillHub Logo"
-        width={sizeClasses[size]}
-        height={sizeClasses[size]}
+        width={width}
+        height={width}
         className="rounded-xl"
       />
     </div>
