@@ -1,6 +1,7 @@
+
 'use client';
-import React from 'react';
-import { Star, Users, Clock, Play, User, Edit } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, Users, Clock, Play, User, Edit, Loader2 } from 'lucide-react';
 import { Course } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import Link from 'next/link';
+import { useUser } from '@/firebase/auth/use-user';
+import { useToast } from '@/hooks/use-toast';
+import { enrollInCourse } from '@/app/actions';
 
 interface CourseCardProps {
   course: Course;
@@ -22,15 +26,46 @@ const CourseCard: React.FC<CourseCardProps> = ({
   isTeacherOrAdmin = false,
   className,
 }) => {
+  const { user } = useUser();
+  const { toast } = useToast();
+  const [isEnrolling, setIsEnrolling] = useState(false);
+
   const levelColors = {
     Beginner: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     Intermediate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     Advanced: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   };
 
-  const studentProgress = showProgress && course.progress && course.progress[Object.keys(course.progress)[0]] || 0;
+  const studentProgress = showProgress && user && course.progress?.[user.uid]?.progress || 0;
   const studentCount = Array.isArray(course.students) ? course.students.length : 0;
   const courseLink = isTeacherOrAdmin ? `/dashboard/manage-course/${course.id}` : `/dashboard/courses/${course.id}`;
+
+  const handleEnroll = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Not Logged In",
+        description: "You must be logged in to enroll in a course.",
+      });
+      return;
+    }
+    setIsEnrolling(true);
+    const result = await enrollInCourse(course.id, user.uid);
+    if (result.success) {
+      toast({
+        title: "Success!",
+        description: result.message,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Enrollment Failed",
+        description: result.message,
+      });
+    }
+    setIsEnrolling(false);
+  };
+
 
   return (
     <div
@@ -123,8 +158,9 @@ const CourseCard: React.FC<CourseCardProps> = ({
                 <span className="text-lg font-bold text-foreground">
                 ${course.price}
                 </span>
-                <Button variant="default">
-                Enroll Now
+                <Button onClick={handleEnroll} disabled={isEnrolling}>
+                  {isEnrolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isEnrolling ? 'Enrolling...' : 'Enroll Now'}
                 </Button>
             </div>
         )}

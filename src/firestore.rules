@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -41,11 +42,18 @@ service cloud.firestore {
     
     match /courses/{courseId} {
       allow read;
-      allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+      allow create, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+      allow update: if (isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer'])) ||
+                      (isSignedIn() && request.auth.uid != resource.data.instructorId &&
+                       request.resource.data.students == resource.data.students.concat([request.auth.uid]));
     }
 
     match /courses/{courseId}/messages/{messageId} {
       allow read, create: if isSignedIn() && (isInstructor(courseId) || isEnrolled(courseId));
+    }
+
+    match /courses/{courseId}/participants/{participantId} {
+        allow read, write: if isSignedIn() && (isInstructor(courseId) || isOwner(participantId));
     }
 
     match /liveClasses/{classId} {
