@@ -1,6 +1,18 @@
 
 {
     "entities": {
+        "user": {
+            "title": "User",
+            "description": "Represents a user in the system, with a role.",
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "avatar": { "type": "string", "format": "uri" },
+                "role": { "type": "string", "enum": ["user", "student", "teacher", "sponsor", "admin", "developer"] }
+            },
+            "required": ["name", "email", "role"]
+        },
         "userProfile": {
             "title": "User Profile",
             "description": "Represents a user's profile in the system.",

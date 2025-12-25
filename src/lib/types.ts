@@ -1,4 +1,3 @@
-
 'use client';
 import { z } from 'zod';
 
@@ -16,6 +15,13 @@ export interface UserProfile {
   stopVideo?: boolean;
 }
 
+export interface StudentProgress {
+  progress: number;
+  score?: number;
+  timeSpent?: number; // in minutes
+  completedLessons: number;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -25,7 +31,7 @@ export interface Course {
   thumbnail: string;
   rating: number;
   students: string[]; // Changed to array of student IDs
-  progress?: { [studentId: string]: number }; // Progress per student
+  progress?: { [studentId: string]: StudentProgress }; // Progress per student
   price: number;
   duration: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';

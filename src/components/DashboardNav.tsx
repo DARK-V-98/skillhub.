@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Heart,
   Shield,
+  TrendingUp,
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ interface NavItem {
 const studentNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
   { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
+  { id: 'my-progress', label: 'My Progress', icon: TrendingUp, href: '/dashboard/my-progress' },
   { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/live-classes' },
   { id: 'study-rooms', label: 'Study Rooms', icon: Users, href: '/dashboard/study-rooms' },
   { id: 'community', label: 'Community', icon: MessageSquare, href: '/dashboard/community' },
