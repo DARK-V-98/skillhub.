@@ -23,14 +23,14 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-interface NavItem {
+export interface NavItem {
   id: string;
   label: string;
   icon: React.ElementType;
   href: string;
 }
 
-const studentNav: NavItem[] = [
+export const studentNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
   { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
   { id: 'my-progress', label: 'My Progress', icon: TrendingUp, href: '/dashboard/my-progress' },
@@ -41,7 +41,7 @@ const studentNav: NavItem[] = [
   { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
 
-const teacherNav: NavItem[] = [
+export const teacherNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
   { id: 'create-course', label: 'Create Course', icon: PlusCircle, href: '/dashboard/create-course' },
   { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
@@ -51,7 +51,7 @@ const teacherNav: NavItem[] = [
   { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
 
-const sponsorNav: NavItem[] = [
+export const sponsorNav: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
     { id: 'scholarships', label: 'Scholarships', icon: GraduationCap, href: '/dashboard/scholarships' },
     { id: 'beneficiaries', label: 'Beneficiaries', icon: Users, href: '/dashboard/beneficiaries' },
@@ -59,7 +59,7 @@ const sponsorNav: NavItem[] = [
     { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
 ];
   
-const adminNav: NavItem[] = [
+export const adminNav: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
     { id: 'users', label: 'Users', icon: Users, href: '/dashboard/users' },
     { id: 'courses', label: 'Courses', icon: BookOpen, href: '/dashboard/courses' },
@@ -93,14 +93,14 @@ const DashboardNav: React.FC = () => {
     return (
         <div className="border-b hidden md:block">
             <div className="container mx-auto">
-                <nav className="flex items-center gap-1 -mb-px">
+                <nav className="flex items-center gap-1 -mb-px overflow-x-auto">
                     {navItems.map((item) => (
                     <Link
                         key={item.id}
                         href={item.href}
                         className={cn(
-                        'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-medium transition-colors',
-                        pathname.startsWith(item.href)
+                        'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-medium transition-colors whitespace-nowrap',
+                        pathname.startsWith(item.href) && (pathname.length === item.href.length || pathname.startsWith(item.href + '/'))
                             ? 'border-primary text-primary'
                             : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                         )}

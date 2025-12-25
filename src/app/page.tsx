@@ -81,9 +81,23 @@ const testimonials = [
     },
 ];
 
-const fadeIn = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1, transition: { duration: 0.8 } },
+const sentence = {
+  hidden: { opacity: 1 },
+  visible: {
+    opacity: 1,
+    transition: {
+      delay: 0.5,
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const letter = {
+  hidden: { opacity: 0, y: 50 },
+  visible: {
+    opacity: 1,
+    y: 0,
+  },
 };
 
 const fadeInUp = {
@@ -103,6 +117,7 @@ export default function HomePage() {
   const firestore = useFirestore();
   const featuredCoursesQuery = firestore ? query(collection(firestore, 'courses'), orderBy('rating', 'desc'), limit(6)) : null;
   const { data: featuredCourses } = useCollection<Course>(featuredCoursesQuery);
+  const heroText = "Empowering Education for Everyone";
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -112,26 +127,37 @@ export default function HomePage() {
         {/* Hero Section */}
         <motion.section 
           className="py-20 md:py-32 bg-secondary/50"
-          initial="initial"
-          animate="animate"
-          variants={fadeIn}
+          initial="hidden"
+          animate="visible"
         >
           <div className="container mx-auto px-4 text-center">
             <motion.h1 
               className="text-4xl md:text-6xl font-extrabold tracking-tight text-gradient mb-6"
-              variants={fadeInUp}
+              variants={sentence}
             >
-              Empowering Education for Everyone
+              {heroText.split(" ").map((word, index) => (
+                <motion.span
+                  key={word + "-" + index}
+                  className="inline-block"
+                  variants={letter}
+                >
+                  {word}&nbsp;
+                </motion.span>
+              ))}
             </motion.h1>
             <motion.p 
               className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground mb-10"
-              variants={fadeInUp}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1, duration: 0.5 }}
             >
               Bridge education gaps with our AI-powered, live teaching tools. Launch your own courses, engage with a global community, and unlock new opportunities.
             </motion.p>
             <motion.div 
-              className="flex justify-center gap-4"
-              variants={fadeInUp}
+              className="flex flex-col sm:flex-row justify-center gap-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2, duration: 0.5 }}
             >
               <Button size="lg" asChild>
                 <Link href="/dashboard">Get Started Free</Link>
@@ -344,7 +370,7 @@ export default function HomePage() {
             viewport={{ once: true, amount: 0.3 }}
             variants={stagger}
           >
-            <motion.div className="prose lg:prose-lg dark:prose-invert" variants={fadeInUp}>
+            <motion.div className="prose lg:prose-lg dark:prose-invert max-w-full" variants={fadeInUp}>
               <h2 className="text-3xl md:text-4xl font-bold mb-4"><span className="text-gradient">Accessibility First, Always</span></h2>
               <p className="text-muted-foreground">
                 Every student deserves equal access to education. Our platform is built from the ground up with comprehensive accessibility features that empower all individuals to thrive.
@@ -382,7 +408,7 @@ export default function HomePage() {
             <p className="max-w-2xl mx-auto text-muted-foreground mb-8">
               Whether you’re starting a new career path or advancing your skills, we have the right course for you.
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button size="lg" asChild>
                 <Link href="/dashboard">Get Started Free</Link>
               </Button>

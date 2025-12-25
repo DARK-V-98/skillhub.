@@ -1,18 +1,17 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
-import { Loader2, Home, BookOpen, Video, MessageSquare, Settings, Users, User as UserIcon, TrendingUp } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import DashboardNav from '@/components/DashboardNav';
+import DashboardNav, { studentNav, teacherNav, sponsorNav, adminNav, NavItem } from '@/components/DashboardNav';
 import Footer from '@/components/footer';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
-import { useRole } from '@/contexts/RoleContext';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRole } from '@/contexts/RoleContext';
 
 
 const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) => {
@@ -53,16 +52,18 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
       </div>
     );
   }
+  
+  const getNavItems = (): NavItem[] => {
+    switch (currentRole) {
+      case 'teacher': return teacherNav;
+      case 'sponsor': return sponsorNav;
+      case 'admin':
+      case 'developer': return adminNav;
+      default: return studentNav;
+    }
+  };
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
-    { id: 'my-courses', label: 'My Courses', icon: BookOpen, href: '/dashboard/my-courses' },
-    { id: 'my-progress', label: 'My Progress', icon: TrendingUp, href: '/dashboard/my-progress' },
-    { id: 'live-classes', label: 'Live Classes', icon: Video, href: '/dashboard/live-classes' },
-    { id: 'study-rooms', label: 'Study Rooms', icon: Users, href: '/dashboard/study-rooms' },
-    { id: 'community', label: 'Community', icon: MessageSquare, href: '/dashboard/community' },
-    { id: 'profile', label: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
-  ];
+  const navItems = getNavItems();
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary/50">
@@ -78,7 +79,7 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
       />
 
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="p-0 w-64">
+        <SheetContent side="left" className="p-0 w-72">
            <nav className="flex flex-col gap-1 p-4 pt-20">
                 {navItems.map((item) => (
                 <Link
@@ -87,7 +88,7 @@ const DashboardLayout: React.FC<{children: React.ReactNode}> = ({ children }) =>
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
                     'flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium transition-colors',
-                    pathname.startsWith(item.href)
+                    pathname.startsWith(item.href) && (pathname.length === item.href.length || pathname.startsWith(item.href + '/'))
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     )}
