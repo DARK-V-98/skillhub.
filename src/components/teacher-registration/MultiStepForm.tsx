@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 
 
 const steps = [
-  { id: 1, title: 'Personal Information', fields: ['fullName', 'email', 'phone', 'dateOfBirth', 'profilePhoto', 'country', 'timezone', 'preferredLanguage'] },
+  { id: 1, title: 'Personal Information', fields: ['fullName', 'email', 'phone', 'dateOfBirth', 'country', 'timezone', 'preferredLanguage'] },
   { id: 2, title: 'Professional Background', fields: ['bio', 'headline', 'areasOfExpertise', 'linkedinUrl', 'websiteUrl'] },
 ];
 
@@ -35,7 +35,6 @@ export default function MultiStepForm() {
         email: '',
         phone: '',
         dateOfBirth: '',
-        profilePhoto: undefined,
         country: '',
         timezone: '',
         bio: '',

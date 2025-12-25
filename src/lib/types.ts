@@ -184,7 +184,6 @@ export const teacherRegistrationSchema = z.object({
   dateOfBirth: z.string().refine((val) => new Date(val) <= new Date(new Date().setFullYear(new Date().getFullYear() - 18)), {
     message: "You must be at least 18 years old",
   }),
-  profilePhoto: z.any(),
   country: z.string().min(2, 'Please select a country'),
   timezone: z.string().min(2, 'Please select a timezone'),
   preferredLanguage: z.array(z.string()).min(1, 'Please select at least one language'),

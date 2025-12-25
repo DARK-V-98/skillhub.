@@ -82,26 +82,6 @@ export default function Step1Personal() {
         />
       </div>
 
-       <FormField
-          control={control}
-          name="profilePhoto"
-          render={({ field: { onChange, value, ...rest } }) => (
-            <FormItem>
-              <FormLabel>Profile Photo</FormLabel>
-              <FormControl>
-                <Input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
-                    {...rest}
-                />
-              </FormControl>
-              <FormDescription>A professional headshot is recommended.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
                 control={control}
