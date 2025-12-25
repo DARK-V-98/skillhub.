@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from 'date-fns';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const MyProgressPage: React.FC = () => {
   const { user, loading: userLoading } = useUser();
@@ -154,21 +154,23 @@ const MyProgressPage: React.FC = () => {
             <CardTitle>Learning Activity (Demo)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-1">
-                {activityData.map((d, i) => (
-                    <Tooltip key={i}>
-                        <TooltipTrigger asChild>
-                            <div 
-                                className="h-4 w-4 rounded-sm"
-                                style={{ backgroundColor: `hsl(var(--primary) / ${d.count === 0 ? 0.1 : d.count * 0.2})`}}
-                            />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{d.count} activities on {format(new Date(d.date), 'MMM d, yyyy')}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                ))}
-            </div>
+            <TooltipProvider>
+              <div className="flex flex-wrap gap-1">
+                  {activityData.map((d, i) => (
+                      <Tooltip key={i}>
+                          <TooltipTrigger asChild>
+                              <div 
+                                  className="h-4 w-4 rounded-sm"
+                                  style={{ backgroundColor: `hsl(var(--primary) / ${d.count === 0 ? 0.1 : d.count * 0.2})`}}
+                              />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                              <p>{d.count} activities on {format(new Date(d.date), 'MMM d, yyyy')}</p>
+                          </TooltipContent>
+                      </Tooltip>
+                  ))}
+              </div>
+            </TooltipProvider>
             <p className="text-sm text-muted-foreground mt-4">This is a demo heatmap showing your learning activity over the past 6 months.</p>
           </CardContent>
       </Card>
