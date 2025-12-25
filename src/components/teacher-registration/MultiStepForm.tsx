@@ -65,6 +65,7 @@ export default function MultiStepForm() {
   };
 
   const onSubmit = async (data: z.infer<typeof teacherRegistrationSchema>) => {
+    console.log("Form data is valid, attempting to submit:", data);
     if (!user) {
         toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to submit an application."});
         return;
@@ -87,11 +88,20 @@ export default function MultiStepForm() {
     }
   };
 
+  const onError = (errors: any) => {
+    console.error("Form validation failed:", errors);
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Please check the form for errors. See the console for details.",
+    });
+  };
+
   return (
     <FormProvider {...methods}>
       <div className="bg-card p-8 rounded-xl border">
         <StepIndicator steps={steps} currentStep={currentStep} />
-        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8 mt-8">
+        <form onSubmit={methods.handleSubmit(onSubmit, onError)} className="space-y-8 mt-8">
           
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
             <Step1Personal />
