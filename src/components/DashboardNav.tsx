@@ -76,6 +76,7 @@ const DashboardNav: React.FC = () => {
           case 'sponsor':
             return sponsorNav;
           case 'admin':
+          case 'developer':
             return adminNav;
           default:
             return studentNav;
