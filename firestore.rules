@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -41,7 +42,10 @@ service cloud.firestore {
     
     match /courses/{courseId} {
       allow read;
-      allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+      allow create, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer']);
+      allow update: if (isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'teacher', 'developer'])) ||
+                      (isSignedIn() && request.auth.uid != resource.data.instructorId &&
+                       request.resource.data.students == resource.data.students.concat([request.auth.uid]));
     }
 
     match /courses/{courseId}/messages/{messageId} {
@@ -115,6 +119,17 @@ service cloud.firestore {
 
      match /studyRooms/{roomId}/{path=**} {
       allow read, write: if isSignedIn();
+    }
+
+    match /blogPosts/{postId} {
+      allow read;
+      allow create, update, delete: if isSignedIn() && isOneOfRoles(request.auth.uid, ['admin', 'developer']);
+    }
+
+    match /blogPosts/{postId}/comments/{commentId} {
+      allow read;
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || isOneOfRoles(request.auth.uid, ['admin', 'developer']));
     }
   }
 }

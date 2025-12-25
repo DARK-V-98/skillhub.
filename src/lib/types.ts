@@ -1,3 +1,4 @@
+
 'use client';
 import { z } from 'zod';
 
@@ -148,6 +149,30 @@ export interface StudyRoom {
     creatorName: string;
     createdAt: any; // ServerTimestamp
     participantCount: number;
+}
+
+export interface BlogPost {
+    id: string;
+    title: string;
+    content: string;
+    coverImage?: string;
+    authorId: string;
+    authorName: string;
+    authorAvatar: string;
+    createdAt: any;
+    updatedAt: any;
+    likes: string[];
+    commentCount: number;
+}
+
+export interface BlogComment {
+    id: string;
+    postId: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    authorAvatar: string;
+    createdAt: any;
 }
 
 export const teacherRegistrationSchema = z.object({

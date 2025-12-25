@@ -209,6 +209,38 @@
                 "participantCount": { "type": "number" }
             },
             "required": ["name", "createdBy", "creatorName", "createdAt"]
+        },
+        "blogPost": {
+            "title": "Blog Post",
+            "description": "An article or post in the blog section.",
+            "type": "object",
+            "properties": {
+                "title": { "type": "string" },
+                "content": { "type": "string", "description": "Markdown content for the blog post." },
+                "coverImage": { "type": "string", "format": "uri" },
+                "authorId": { "type": "string" },
+                "authorName": { "type": "string" },
+                "authorAvatar": { "type": "string", "format": "uri" },
+                "createdAt": { "type": "string", "format": "date-time" },
+                "updatedAt": { "type": "string", "format": "date-time" },
+                "likes": { "type": "array", "items": { "type": "string" } },
+                "commentCount": { "type": "number" }
+            },
+            "required": ["title", "content", "authorId", "authorName", "createdAt"]
+        },
+        "blogComment": {
+            "title": "Blog Comment",
+            "description": "A comment on a blog post.",
+            "type": "object",
+            "properties": {
+                "postId": { "type": "string" },
+                "content": { "type": "string" },
+                "authorId": { "type": "string" },
+                "authorName": { "type": "string" },
+                "authorAvatar": { "type": "string", "format": "uri" },
+                "createdAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["postId", "content", "authorId", "createdAt"]
         }
     },
     "auth": {
@@ -274,6 +306,14 @@
         "/studyRooms/{roomId}/participants/{participantId}": {
             "schema": { "$ref": "#/entities/userProfile" },
             "description": "Sub-collection of participants for a specific study room."
+        },
+        "/blogPosts": {
+            "schema": { "$ref": "#/entities/blogPost" },
+            "description": "Collection of all blog posts."
+        },
+        "/blogPosts/{postId}/comments": {
+            "schema": { "$ref": "#/entities/blogComment" },
+            "description": "Sub-collection of comments for a specific blog post."
         }
     }
 }
