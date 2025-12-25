@@ -1,15 +1,16 @@
+'use client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Users, BarChart, Heart, Video, PenTool, TrendingUp, BookOpen, Shield, GraduationCap, Code } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { CheckCircle, Video, PenTool, TrendingUp, Shield, GraduationCap, Code } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Logo from '@/components/Logo';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import StudentForm from '@/components/StudentForm';
 import TeacherForm from '@/components/TeacherForm';
 import SponsorForm from '@/components/SponsorForm';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { motion } from 'framer-motion';
 
 const features = [
   {
@@ -45,34 +46,28 @@ const features = [
 ];
 
 const accessibilityFeatures = {
-  visual: [
-    'Screen reader optimization',
-    'High contrast modes',
-    'Dyslexia-friendly fonts',
-    'Adjustable font sizes (16-32px)',
-    'Color blind safe palette',
-  ],
-  hearing: [
-    'Mandatory captions',
-    'Sign language interpretation',
-    'Visual notifications',
-    'Transcript-only mode',
-    'Audio description tracks',
-  ],
-  motor: [
-    'Keyboard-only navigation',
-    'Voice control support',
-    'Larger click targets (44px+)',
-    'Extended timeout periods',
-    'No drag-and-drop required',
-  ],
-  cognitive: [
-    'Simplified UI mode',
-    'Distraction-free reading',
-    'Content summarization',
-    'Dictionary tooltips',
-    'Clear confirmation dialogs',
-  ],
+  visual: ['Screen reader optimization', 'High contrast modes', 'Dyslexia-friendly fonts', 'Adjustable font sizes', 'Color blind safe palette'],
+  hearing: ['Mandatory captions', 'Sign language interpretation', 'Visual notifications', 'Transcript-only mode'],
+  motor: ['Keyboard-only navigation', 'Voice control support', 'Larger click targets (44px+)', 'No drag-and-drop required'],
+  cognitive: ['Simplified UI mode', 'Distraction-free reading', 'Content summarization', 'Clear confirmation dialogs'],
+};
+
+const fadeIn = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.8 } },
+};
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
+
+const stagger = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 export default function HomePage() {
@@ -82,15 +77,29 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-20 md:py-32 bg-secondary/50">
+        <motion.section 
+          className="py-20 md:py-32 bg-secondary/50"
+          initial="initial"
+          animate="animate"
+          variants={fadeIn}
+        >
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gradient mb-6">
+            <motion.h1 
+              className="text-4xl md:text-6xl font-extrabold tracking-tight text-gradient mb-6"
+              variants={fadeInUp}
+            >
               Empowering Education for Everyone
-            </h1>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground mb-10">
+            </motion.h1>
+            <motion.p 
+              className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground mb-10"
+              variants={fadeInUp}
+            >
               Bridge education gaps with our AI-powered, live teaching tools. Launch your own courses, engage with a global community, and unlock new opportunities.
-            </p>
-            <div className="flex justify-center gap-4">
+            </motion.p>
+            <motion.div 
+              className="flex justify-center gap-4"
+              variants={fadeInUp}
+            >
               <Button size="lg" asChild>
                 <Link href="/dashboard">Get Started Free</Link>
               </Button>
@@ -98,144 +107,129 @@ export default function HomePage() {
                 <Video className="mr-2 h-5 w-5" />
                 Watch Video
               </Button>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Stats Section */}
-        <section className="py-12 bg-background">
+        <motion.section 
+          className="py-12 bg-background"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={stagger}
+        >
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <div className="space-y-1">
-                <p className="text-4xl font-bold text-primary">10K+</p>
-                <p className="text-muted-foreground">Active Students</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-4xl font-bold text-primary">500+</p>
-                <p className="text-muted-foreground">Expert Instructors</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-4xl font-bold text-primary">100%</p>
-                <p className="text-muted-foreground">Success Rate</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-4xl font-bold text-primary">24/7</p>
-                <p className="text-muted-foreground">Live Support</p>
-              </div>
+              {[{val: "10K+", desc: "Active Students"}, {val: "500+", desc: "Expert Instructors"}, {val: "100%", desc: "Success Rate"}, {val: "24/7", desc: "Live Support"}].map((stat, i) => (
+                <motion.div key={i} className="space-y-1" variants={fadeInUp}>
+                  <p className="text-4xl font-bold text-primary">{stat.val}</p>
+                  <p className="text-muted-foreground">{stat.desc}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </section>
+        </motion.section>
         
         {/* Features Section */}
-        <section id="features" className="py-20 bg-secondary/50">
+        <motion.section 
+          id="features" 
+          className="py-20 bg-secondary/50"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+        >
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
+            <motion.div className="text-center mb-12" variants={fadeInUp}>
               <h2 className="text-3xl md:text-4xl font-bold">Everything You Need to Learn & Teach</h2>
               <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
                 A comprehensive platform designed with the best tools and features to help you succeed, whatever your role.
               </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </motion.div>
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" variants={stagger}>
               {features.map((feature, index) => (
-                <Card key={index} className="text-center p-6 card-hover">
-                  <div className="mb-4 inline-block bg-primary/10 p-4 rounded-full">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </Card>
+                <motion.div key={index} variants={fadeInUp} whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}>
+                  <Card className="text-center p-6 h-full border-transparent bg-background/50 shadow-lg hover:shadow-primary/20 transition-shadow">
+                    <div className="mb-4 inline-block bg-primary/10 p-4 rounded-full">
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </Card>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Roles Section */}
         <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
+            <motion.div 
+              className="text-center mb-12"
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true, amount: 0.5 }}
+              variants={fadeInUp}
+            >
               <h2 className="text-3xl md:text-4xl font-bold">Built for Every Role</h2>
               <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
                 Whether you’re learning, teaching, or sponsoring, we’ve got you covered.
               </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="overflow-hidden card-hover">
-                <Image src="https://picsum.photos/seed/students/600/400" alt="Students learning" width={600} height={400} className="w-full h-48 object-cover" />
-                <div className="p-6">
-                  <h3 className="text-2xl font-semibold mb-4">For Students</h3>
-                  <ul className="space-y-2 text-muted-foreground">
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Live, Interactive Sessions</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Personalized Learning Paths</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Peer-to-Peer Collaboration</li>
-                  </ul>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="mt-6 w-full">Explore Courses</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Start Your Learning Journey</DialogTitle>
-                        <DialogDescription>Sign up to explore our wide range of courses.</DialogDescription>
-                      </DialogHeader>
-                      <StudentForm />
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </Card>
-              <Card className="overflow-hidden card-hover">
-                <Image src="https://picsum.photos/seed/teacher/600/400" alt="Teacher presenting" width={600} height={400} className="w-full h-48 object-cover" />
-                <div className="p-6">
-                  <h3 className="text-2xl font-semibold mb-4">For Teachers</h3>
-                  <ul className="space-y-2 text-muted-foreground">
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Content Monetization</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Powerful Authoring Tools</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Audience Engagement Analytics</li>
-                  </ul>
-                   <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="mt-6 w-full">Become A Teacher</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Become a Teacher</DialogTitle>
-                        <DialogDescription>Share your knowledge and start earning today.</DialogDescription>
-                      </DialogHeader>
-                      <TeacherForm />
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </Card>
-              <Card className="overflow-hidden card-hover">
-                <Image src="https://picsum.photos/seed/sponsors/600/400" alt="Business meeting" width={600} height={400} className="w-full h-48 object-cover" />
-                <div className="p-6">
-                  <h3 className="text-2xl font-semibold mb-4">For Sponsors</h3>
-                  <ul className="space-y-2 text-muted-foreground">
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Fund Scholarships</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Brand Visibility</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" />Impact Reporting</li>
-                  </ul>
-                   <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="mt-6 w-full">Become a Sponsor</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Become a Sponsor</DialogTitle>
-                        <DialogDescription>Make an impact and empower the next generation of learners.</DialogDescription>
-                      </DialogHeader>
-                      <SponsorForm />
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </Card>
-            </div>
+            </motion.div>
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={stagger}
+            >
+              {[
+                { title: "For Students", img: "https://picsum.photos/seed/students/600/400", list: ["Live, Interactive Sessions", "Personalized Learning Paths", "Peer-to-Peer Collaboration"], btn: "Explore Courses", Form: StudentForm, formTitle: "Start Your Learning Journey", formDesc: "Sign up to explore our wide range of courses." },
+                { title: "For Teachers", img: "https://picsum.photos/seed/teacher/600/400", list: ["Content Monetization", "Powerful Authoring Tools", "Audience Engagement Analytics"], btn: "Become A Teacher", Form: TeacherForm, formTitle: "Become a Teacher", formDesc: "Share your knowledge and start earning today." },
+                { title: "For Sponsors", img: "https://picsum.photos/seed/sponsors/600/400", list: ["Fund Scholarships", "Brand Visibility", "Impact Reporting"], btn: "Become a Sponsor", Form: SponsorForm, formTitle: "Become a Sponsor", formDesc: "Make an impact and empower the next generation of learners." }
+              ].map((role, i) => (
+                <motion.div key={i} variants={fadeInUp} whileHover={{ y: -5, transition: { duration: 0.2 } }}>
+                  <Card className="overflow-hidden card-hover h-full flex flex-col">
+                    <Image src={role.img} alt={role.title} width={600} height={400} className="w-full h-48 object-cover" />
+                    <div className="p-6 flex flex-col flex-grow">
+                      <h3 className="text-2xl font-semibold mb-4">{role.title}</h3>
+                      <ul className="space-y-2 text-muted-foreground flex-grow">
+                        {role.list.map((item, j) => (
+                          <li key={j} className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" /> {item}</li>
+                        ))}
+                      </ul>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="mt-6 w-full">{role.btn}</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{role.formTitle}</DialogTitle>
+                            <DialogDescription>{role.formDesc}</DialogDescription>
+                          </DialogHeader>
+                          <role.Form />
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </section>
         
         {/* Accessibility Section */}
         <section className="py-20 bg-secondary/50">
-          <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-            <div className="prose lg:prose-lg dark:prose-invert">
+          <motion.div 
+            className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={stagger}
+          >
+            <motion.div className="prose lg:prose-lg dark:prose-invert" variants={fadeInUp}>
               <h2 className="text-3xl md:text-4xl font-bold mb-4"><span className="text-gradient">Accessibility First, Always</span></h2>
               <p className="text-muted-foreground">
                 Every student deserves equal access to education. Our platform is built from the ground up with comprehensive accessibility features that empower all individuals to thrive.
@@ -246,39 +240,29 @@ export default function HomePage() {
                   We are committed to removing barriers. Contact us to learn more about our scholarship programs.
                 </p>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <h4 className="font-semibold mb-3 text-lg">Visual</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {accessibilityFeatures.visual.map(item => <li key={item} className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-emerald-500" /> {item}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3 text-lg">Hearing</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {accessibilityFeatures.hearing.map(item => <li key={item} className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-emerald-500" /> {item}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3 text-lg">Motor</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {accessibilityFeatures.motor.map(item => <li key={item} className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-emerald-500" /> {item}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3 text-lg">Cognitive</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {accessibilityFeatures.cognitive.map(item => <li key={item} className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-emerald-500" /> {item}</li>)}
-                </ul>
-              </div>
-            </div>
-          </div>
+            </motion.div>
+            <motion.div className="grid grid-cols-2 gap-8" variants={stagger}>
+              {Object.entries(accessibilityFeatures).map(([key, value]) => (
+                <motion.div key={key} variants={fadeInUp}>
+                  <h4 className="font-semibold mb-3 text-lg capitalize">{key}</h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    {value.map(item => <li key={item} className="flex items-start gap-2"><CheckCircle className="h-4 w-4 mt-1 text-emerald-500 shrink-0" /> {item}</li>)}
+                  </ul>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* CTA Section */}
         <section className="py-20">
-          <div className="container mx-auto px-4 text-center">
+          <motion.div 
+            className="container mx-auto px-4 text-center"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.5 }}
+            variants={fadeInUp}
+          >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Learning Journey?</h2>
             <p className="max-w-2xl mx-auto text-muted-foreground mb-8">
               Whether you’re starting a new career path or advancing your skills, we have the right course for you.
@@ -291,7 +275,7 @@ export default function HomePage() {
                 Explore a Tour
               </Button>
             </div>
-          </div>
+          </motion.div>
         </section>
       </main>
 

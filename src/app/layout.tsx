@@ -6,8 +6,7 @@ import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import AccessibilityPanel from '@/components/AccessibilityPanel';
-import Header from '@/components/header';
-import Footer from '@/components/footer';
+import AppLoader from '@/components/AppLoader';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const openSans = Open_Sans({ 
@@ -29,15 +28,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${openSans.variable} font-sans`}>
-        <FirebaseClientProvider>
-          <AccessibilityProvider>
-            <RoleProvider>
-              {children}
-              <Toaster />
-              <AccessibilityPanel />
-            </RoleProvider>
-          </AccessibilityProvider>
-        </FirebaseClientProvider>
+        <AppLoader>
+            <FirebaseClientProvider>
+            <AccessibilityProvider>
+                <RoleProvider>
+                {children}
+                <Toaster />
+                <AccessibilityPanel />
+                </RoleProvider>
+            </AccessibilityProvider>
+            </FirebaseClientProvider>
+        </AppLoader>
       </body>
     </html>
   );
