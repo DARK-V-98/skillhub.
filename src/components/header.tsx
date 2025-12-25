@@ -11,8 +11,7 @@ const navLinks = [
     { href: "/#features", label: "Features" },
     { href: "/#courses", label: "Courses" },
     { href: "/teachers", label: "Instructors" },
-    { href: "/#sponsorship", label: "Sponsorship" },
-    { href: "/#contact", label: "Contact" },
+    { href: "/blog", label: "Blog" },
 ];
 
 export default function Header() {
