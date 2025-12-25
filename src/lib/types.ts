@@ -181,9 +181,7 @@ export const teacherRegistrationSchema = z.object({
   fullName: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
-  dateOfBirth: z.string().refine((val) => new Date(val) <= new Date(new Date().setFullYear(new Date().getFullYear() - 18)), {
-    message: "You must be at least 18 years old",
-  }),
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
   country: z.string().min(2, 'Please select a country'),
   timezone: z.string().min(2, 'Please select a timezone'),
   preferredLanguage: z.array(z.string()).min(1, 'Please select at least one language'),
