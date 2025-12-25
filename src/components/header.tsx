@@ -16,10 +16,13 @@ export default function Header() {
             <Link href="/#features" className="transition-colors hover:text-primary">
               Features
             </Link>
+            <Link href="/#courses" className="transition-colors hover:text-primary">
+              Courses
+            </Link>
              <Link href="/teachers" className="transition-colors hover:text-primary">
               Instructors
             </Link>
-            <Link href="/#sponsorship" className="transition-colors hover:text-primary">
+            <Link href="#sponsorship" className="transition-colors hover:text-primary">
               Sponsorship
             </Link>
             <Link href="#contact" className="transition-colors hover:text-primary">

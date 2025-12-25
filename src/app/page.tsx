@@ -1,7 +1,8 @@
+
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Video, PenTool, TrendingUp, Shield, GraduationCap, Code } from 'lucide-react';
+import { CheckCircle, Video, PenTool, TrendingUp, Shield, GraduationCap, Code, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,6 +12,13 @@ import SponsorForm from '@/components/SponsorForm';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { motion } from 'framer-motion';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, query, limit, orderBy } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/provider';
+import { Course } from '@/lib/types';
+import CourseCard from '@/components/CourseCard';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const features = [
   {
@@ -52,6 +60,27 @@ const accessibilityFeatures = {
   cognitive: ['Simplified UI mode', 'Distraction-free reading', 'Content summarization', 'Clear confirmation dialogs'],
 };
 
+const testimonials = [
+    {
+      quote: "SkillHub has completely changed the way I learn. The live classes are engaging, and the community is so supportive. I've already landed a new job with the skills I've gained!",
+      name: "Alex Johnson",
+      role: "Student",
+      avatar: "https://i.pravatar.cc/150?u=alex",
+    },
+    {
+      quote: "As an instructor, SkillHub gives me the tools I need to create high-quality content and connect with students globally. The monetization options are a fantastic bonus.",
+      name: "Dr. Sarah Chen",
+      role: "Instructor",
+      avatar: "https://i.pravatar.cc/150?u=sarah",
+    },
+    {
+      quote: "Our company's sponsorship through SkillHub has been a rewarding experience. We're directly impacting students' lives while also discovering incredible new talent for our team.",
+      name: "David Lee",
+      role: "Sponsor, TechCorp",
+      avatar: "https://i.pravatar.cc/150?u=david",
+    },
+];
+
 const fadeIn = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.8 } },
@@ -71,6 +100,10 @@ const stagger = {
 };
 
 export default function HomePage() {
+  const firestore = useFirestore();
+  const featuredCoursesQuery = firestore ? query(collection(firestore, 'courses'), orderBy('rating', 'desc'), limit(6)) : null;
+  const { data: featuredCourses } = useCollection<Course>(featuredCoursesQuery);
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
@@ -131,6 +164,46 @@ export default function HomePage() {
           </div>
         </motion.section>
         
+        {/* Featured Courses Section */}
+        {featuredCourses && featuredCourses.length > 0 && (
+          <motion.section 
+            id="courses"
+            className="py-20"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={stagger}
+          >
+            <div className="container mx-auto px-4">
+              <motion.div className="text-center mb-12" variants={fadeInUp}>
+                <h2 className="text-3xl md:text-4xl font-bold">Featured Courses</h2>
+                <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
+                  Explore our most popular courses and start learning a new skill today.
+                </p>
+              </motion.div>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {featuredCourses.map((course) => (
+                    <CarouselItem key={course.id} className="md:basis-1/2 lg:basis-1/3">
+                      <div className="p-1">
+                        <CourseCard course={course} />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex" />
+                <CarouselNext className="hidden sm:flex" />
+              </Carousel>
+            </div>
+          </motion.section>
+        )}
+
         {/* Features Section */}
         <motion.section 
           id="features" 
@@ -162,9 +235,51 @@ export default function HomePage() {
             </motion.div>
           </div>
         </motion.section>
+        
+        {/* Testimonials Section */}
+        <motion.section 
+          className="py-20"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+        >
+          <div className="container mx-auto px-4">
+            <motion.div className="text-center mb-12" variants={fadeInUp}>
+              <h2 className="text-3xl md:text-4xl font-bold">What Our Community is Saying</h2>
+              <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
+                We're proud to have helped thousands of learners and instructors achieve their goals.
+              </p>
+            </motion.div>
+            <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-8" variants={stagger}>
+              {testimonials.map((testimonial, index) => (
+                <motion.div key={index} variants={fadeInUp} whileHover={{ y: -5, transition: { duration: 0.2 } }}>
+                  <Card className="p-6 h-full flex flex-col justify-between">
+                    <div className="flex-grow">
+                      <div className="flex text-yellow-400 mb-4">
+                        {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-current" />)}
+                      </div>
+                      <p className="text-muted-foreground italic">"{testimonial.quote}"</p>
+                    </div>
+                    <div className="flex items-center mt-6">
+                      <Avatar className="h-12 w-12 mr-4">
+                        <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
+                        <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{testimonial.name}</p>
+                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </motion.section>
 
         {/* Roles Section */}
-        <section className="py-20">
+        <section className="py-20 bg-secondary/50">
           <div className="container mx-auto px-4">
             <motion.div 
               className="text-center mb-12"
@@ -221,7 +336,7 @@ export default function HomePage() {
         </section>
         
         {/* Accessibility Section */}
-        <section className="py-20 bg-secondary/50">
+        <section className="py-20">
           <motion.div 
             className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center"
             initial="initial"
@@ -255,7 +370,7 @@ export default function HomePage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20">
+        <section className="py-20 bg-secondary/50">
           <motion.div 
             className="container mx-auto px-4 text-center"
             initial="initial"
