@@ -79,21 +79,35 @@ export async function submitTeacherApplication(
 }
 
 const sponsorFormSchema = z.object({
-  companyName: z.string().min(2, { message: "Company name is required." }),
-  contactPerson: z.string().min(2, { message: "Contact person is required." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-});
+    companyName: z.string().min(2, { message: "Company name is required." }),
+    contactPerson: z.string().min(2, { message: "Contact person is required." }),
+    email: z.string().email({ message: "Please enter a valid email address." }),
+  });
 
 export async function submitSponsorInquiry(
-  data: z.infer<typeof sponsorFormSchema>
+    data: z.infer<typeof sponsorFormSchema>
 ): Promise<FormState> {
-  const parsedData = sponsorFormSchema.safeParse(data);
+    const parsedData = sponsorFormSchema.safeParse(data);
 
-  if (!parsedData.success) {
-    return { success: false, message: "Invalid data provided." };
-  }
+    if (!parsedData.success) {
+        return { success: false, message: "Invalid data provided." };
+    }
 
-  console.log("New sponsor inquiry:", parsedData.data);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return { success: true, message: "Thank you for your interest in sponsoring! We will contact you shortly." };
+    console.log("New sponsor inquiry:", parsedData.data);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { success: true, message: "Thank you for your interest! We'll be in touch with you shortly." };
+}
+
+
+export async function submitTeacherRegistration(data: any): Promise<FormState> {
+    console.log("New teacher registration submission:", data);
+    // In a real application, you would save this to Firestore,
+    // upload files to Cloud Storage, and trigger a review process.
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // For now, we'll just simulate a success response.
+    return {
+        success: true,
+        message: "Application submitted successfully! We'll review it and get back to you within 3-5 business days."
+    };
 }
