@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from "zod";
-import { getFirestore, doc, updateDoc, arrayUnion, getDoc, runTransaction, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, arrayUnion, arrayRemove, getDoc, runTransaction, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { app } from "@/firebase/config";
 import { getAuth } from "firebase/auth";
 import { Course, CommunityVote } from "@/lib/types";
@@ -132,7 +132,7 @@ export async function enrollInCourse(courseId: string, userId: string): Promise<
       }
   
       const course = courseSnap.data() as Course;
-      if (course.students?.includes(userId)) {
+      if (Array.isArray(course.students) && course.students.includes(userId)) {
         return { success: false, message: "You are already enrolled in this course." };
       }
   
@@ -241,3 +241,42 @@ export async function handleVote(
       return { success: false, message: 'An unknown error occurred.' };
     }
   }
+
+export async function toggleBlogPostLike(postId: string, userId: string): Promise<{ success: boolean; message: string; liked: boolean }> {
+  if (!userId) {
+    return { success: false, message: 'You must be logged in to like a post.', liked: false };
+  }
+
+  const firestore = getFirestore(app);
+  const postRef = doc(firestore, 'blogPosts', postId);
+
+  try {
+    const postSnap = await getDoc(postRef);
+    if (!postSnap.exists()) {
+      return { success: false, message: 'Post not found.', liked: false };
+    }
+
+    const postData = postSnap.data();
+    const likes: string[] = postData.likes || [];
+    let liked = false;
+
+    if (likes.includes(userId)) {
+      // User is unliking the post
+      await updateDoc(postRef, {
+        likes: arrayRemove(userId),
+      });
+      liked = false;
+    } else {
+      // User is liking the post
+      await updateDoc(postRef, {
+        likes: arrayUnion(userId),
+      });
+      liked = true;
+    }
+
+    return { success: true, message: 'Success', liked };
+  } catch (error) {
+    console.error("Error toggling like:", error);
+    return { success: false, message: 'An unknown error occurred.', liked: false };
+  }
+}
