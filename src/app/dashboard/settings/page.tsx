@@ -20,9 +20,11 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, User as UserIcon, MessageSquare } from 'lucide-react';
+import { Loader2, Mail, User as UserIcon, MessageSquare, Edit, Camera } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import CameraCapture from '@/components/CameraCapture';
 
 
 const profileSchema = z.object({
@@ -34,6 +36,7 @@ export default function SettingsPage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [isCameraOpen, setIsCameraOpen] = React.useState(false);
 
   const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
   const { data: userProfile, loading: profileLoading } = useDoc<UserProfile>(userProfileRef);
@@ -100,6 +103,12 @@ export default function SettingsPage() {
     )
   }
 
+  const handleAvatarUpdate = (newAvatarUrl: string) => {
+    form.setValue('avatar', newAvatarUrl);
+    onSubmit({ name: form.getValues('name'), avatar: newAvatarUrl });
+    setIsCameraOpen(false);
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <h1 className="text-3xl font-bold">Profile & Settings</h1>
@@ -147,9 +156,27 @@ export default function SettingsPage() {
                   render={({ field }) => (
                       <FormItem>
                       <FormLabel>Avatar URL</FormLabel>
-                      <FormControl>
-                          <Input placeholder="https://example.com/your-avatar.png" {...field} />
-                      </FormControl>
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                            <Input placeholder="https://example.com/your-avatar.png" {...field} />
+                        </FormControl>
+                        <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" type="button">
+                              <Camera className="mr-2 h-4 w-4" /> Use Camera
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-xl">
+                            <DialogHeader>
+                              <DialogTitle>Update Profile Picture</DialogTitle>
+                              <DialogDescription>
+                                Position your face in the frame and take a picture.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <CameraCapture onCapture={handleAvatarUpdate} />
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                       <FormMessage />
                       </FormItem>
                   )}
