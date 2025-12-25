@@ -16,6 +16,7 @@ import {
   getDocs,
   setDoc,
   increment,
+  where,
 } from 'firebase/firestore';
 import { Button } from './ui/button';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Send, MessageSquare, Users, MoreVertical, XCircle, VolumeX } from 'lucide-react';
@@ -70,7 +71,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
   const router = useRouter();
   const { toast } = useToast();
 
-  const [pc] = useState(new RTCPeerConnection(servers));
+  const [pc] = useState(() => new RTCPeerConnection(servers));
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<StreamWithId[]>([]);
   const [isMicOn, setIsMicOn] = useState(true);
@@ -95,18 +96,17 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
     const roomRef = doc(firestore, collectionName, room.id);
     const participantRef = doc(roomRef, 'participants', user.uid);
 
-    // Subscribe to moderation commands if it's a live class
     let unsubscribeModeration = () => {};
     if (collectionName === 'liveClasses') {
         unsubscribeModeration = onSnapshot(participantRef, (docSnap) => {
             const data = docSnap.data();
             if (data?.mute) {
                 toggleMic(true);
-                updateDoc(participantRef, { mute: false }); // Reset command
+                updateDoc(participantRef, { mute: false }); 
             }
             if (data?.stopVideo) {
                 toggleCamera(true);
-                updateDoc(participantRef, { stopVideo: false }); // Reset command
+                updateDoc(participantRef, { stopVideo: false });
             }
         });
     }
@@ -118,15 +118,19 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
         avatar: user.photoURL,
         joinedAt: serverTimestamp(),
       }, { merge: true });
-      await updateDoc(roomRef, { participantCount: increment(1) });
+      if ('participantCount' in room) {
+        await updateDoc(roomRef, { participantCount: increment(1) });
+      }
     };
   
     const leaveRoom = async () => {
         try {
             await deleteDoc(participantRef);
-            await updateDoc(roomRef, { participantCount: increment(-1) });
+            if ('participantCount' in room) {
+              await updateDoc(roomRef, { participantCount: increment(-1) });
+            }
         } catch(error) {
-            // Ignore errors, e.g. if doc is already deleted
+            // Ignore errors
         }
     };
   
@@ -141,7 +145,6 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
         const oldParticipants = participants;
         setParticipants(newParticipantsList);
 
-        // Defer notification logic to avoid happening during render
         setTimeout(() => {
             const { joined, left } = handleJoinLeaveNotifications(newParticipantsList, oldParticipants);
             joined.forEach(p => toast({ title: `${p.name || 'A user'} has joined.` }));
@@ -149,7 +152,6 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
         }, 0);
     });
   
-    // Listen for own document deletion (kick)
     const unsubscribeSelf = onSnapshot(participantRef, (docSnap) => {
         if (!docSnap.exists() && collectionName === 'liveClasses') {
             toast({ title: "You have been removed from the class.", variant: "destructive"});
@@ -157,11 +159,15 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
         }
     });
 
+    // Handle page close/refresh
+    window.addEventListener('beforeunload', leaveRoom);
+
     return () => {
       leaveRoom();
       unsubscribeParticipants();
       unsubscribeModeration();
       unsubscribeSelf();
+      window.removeEventListener('beforeunload', leaveRoom);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, user, room.id, collectionName]);
@@ -220,16 +226,13 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
       
       pc.ontrack = (event) => {
         const stream = event.streams[0];
-        const streamId = stream.id; // Or a unique ID from signaling
+        const streamId = stream.id;
+
+        const remoteUser = participants.find(p => p.id !== user.uid) || { id: streamId, name: 'Participant' };
         
-        // Find user info for this stream
-        // This is a simplified approach; a more robust solution would map track IDs to user IDs
-        const participantUser = participants.find(p => p.id !== user.uid) || { id: streamId, name: 'Participant' };
-
-
         setRemoteStreams(prev => {
-            if(prev.find(s => s.id === streamId)) return prev;
-            return [...prev, { id: streamId, stream, user: participantUser }];
+            if(prev.some(s => s.id === streamId)) return prev;
+            return [...prev, { id: streamId, stream, user: remoteUser }];
         });
       };
     };
@@ -237,7 +240,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
     setupMediaAndSignaling();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pc, user, firestore, room.id, toast, participants, collectionName]);
+  }, [pc, user, firestore, room.id, toast, collectionName]);
 
     useEffect(() => {
     if (!firestore || !room.id) return;
@@ -269,19 +272,23 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
 
   const toggleMic = (forceOff = false) => {
     if (localStream) {
-      const currentlyOn = localStream.getAudioTracks().some(track => track.enabled);
-      const turnOff = forceOff || currentlyOn;
-      localStream.getAudioTracks().forEach(track => track.enabled = !turnOff);
-      setIsMicOn(!turnOff);
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        const currentlyOn = audioTrack.enabled;
+        audioTrack.enabled = forceOff ? false : !currentlyOn;
+        setIsMicOn(forceOff ? false : !currentlyOn);
+      }
     }
   };
 
   const toggleCamera = (forceOff = false) => {
     if (localStream) {
-      const currentlyOn = localStream.getVideoTracks().some(track => track.enabled);
-      const turnOff = forceOff || currentlyOn;
-      localStream.getVideoTracks().forEach(track => track.enabled = !turnOff);
-      setIsCameraOn(!turnOff);
+       const videoTrack = localStream.getVideoTracks()[0];
+       if(videoTrack) {
+        const currentlyOn = videoTrack.enabled;
+        videoTrack.enabled = forceOff ? false : !currentlyOn;
+        setIsCameraOn(forceOff ? false : !currentlyOn);
+       }
     }
   };
 
@@ -294,7 +301,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
         try {
             const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const screenTrack = screenStream.getVideoTracks()[0];
-            screenTrackRef.current = videoSender.track; // Save original camera track
+            screenTrackRef.current = videoSender.track; 
             videoSender.replaceTrack(screenTrack);
             
             const newLocalStream = new MediaStream([screenTrack, ...localStream.getAudioTracks()]);
@@ -329,8 +336,18 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
     pc?.close();
     localStream?.getTracks().forEach(track => track.stop());
     
-    if (firestore) {
+    if (firestore && user) {
         const roomRef = doc(firestore, collectionName, room.id);
+        const participantRef = doc(roomRef, 'participants', user.uid);
+        try {
+          await deleteDoc(participantRef);
+          if('participantCount' in room) {
+            await updateDoc(roomRef, { participantCount: increment(-1) });
+          }
+        } catch (error) {
+          // ignore error if doc already deleted
+        }
+
         const callsCollection = collection(roomRef, 'calls');
         const callsSnapshot = await getDocs(callsCollection);
         callsSnapshot.forEach(async (callDoc) => {
@@ -363,9 +380,9 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
 };
 
   const isVideoEnabled = collectionName !== 'courses';
-  const numStreams = isVideoEnabled ? 1 + remoteStreams.length : 0;
+  const numStreams = allStreams.length;
   const gridLayout = 
-      numStreams === 1 ? "grid-cols-1 grid-rows-1" :
+      numStreams <= 1 ? "grid-cols-1 grid-rows-1" :
       numStreams === 2 ? "grid-cols-2 grid-rows-1" :
       numStreams <= 4 ? "grid-cols-2 grid-rows-2" :
       numStreams <= 6 ? "grid-cols-3 grid-rows-2" :
@@ -377,22 +394,15 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ room, collectionName 
         <div className="flex-1 flex flex-col relative">
             {isVideoEnabled ? (
                 <div className={cn("grid gap-2 h-full w-full p-2 overflow-auto", gridLayout)}>
-                    {localStream && (
-                        <div className="relative bg-gray-900 rounded-md overflow-hidden">
-                            <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                            <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{user?.displayName} (You)</div>
-                        </div>
-                    )}
-                    {remoteStreams.map(({ id, stream, user: streamUser }) => (
+                    {allStreams.map(({ id, stream, user: streamUser }) => (
                         <div key={id} className="relative bg-gray-900 rounded-md overflow-hidden">
-                            <video ref={el => { if(el) el.srcObject = stream }} autoPlay playsInline className="w-full h-full object-cover" />
+                            <video ref={id === user?.uid ? localVideoRef : el => { if(el) el.srcObject = stream }} autoPlay playsInline muted={id === user?.uid} className="w-full h-full object-cover" />
                             <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 text-sm rounded">{streamUser.name}</div>
                         </div>
                     ))}
                 </div>
             ) : (
                 <div className="flex flex-col h-full">
-                    {/* Chat takes full view when video is disabled */}
                 </div>
             )}
             
