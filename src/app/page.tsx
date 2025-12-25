@@ -1,7 +1,7 @@
 
 'use client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { CheckCircle, Video, PenTool, TrendingUp, Shield, GraduationCap, Code, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -217,7 +217,7 @@ export default function HomePage() {
                 <CarouselContent>
                   {featuredCourses.map((course) => (
                     <CarouselItem key={course.id} className="md:basis-1/2 lg:basis-1/3">
-                      <div className="p-1">
+                      <div className="p-1 h-full">
                         <CourseCard course={course} />
                       </div>
                     </CarouselItem>
