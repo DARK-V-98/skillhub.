@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { 
@@ -29,8 +30,8 @@ const TeacherDashboard: React.FC = () => {
     const coursesQuery = user ? query(collection(firestore, 'courses'), where('instructorId', '==', user.uid)) : null;
     const { data: myCourses, loading: coursesLoading } = useCollection<Course>(coursesQuery);
 
-    const totalStudents = React.useMemo(() => myCourses?.reduce((acc, course) => acc + course.students.length, 0) || 0, [myCourses]);
-    const courseRevenue = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (course.price * course.students.length), 0) || 0, [myCourses]);
+    const totalStudents = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (Array.isArray(course.students) ? course.students.length : 0), 0) || 0, [myCourses]);
+    const courseRevenue = React.useMemo(() => myCourses?.reduce((acc, course) => acc + (course.price * (Array.isArray(course.students) ? course.students.length : 0)), 0) || 0, [myCourses]);
     const averageRating = React.useMemo(() => {
         if (!myCourses || myCourses.length === 0) return 0;
         const ratedCourses = myCourses.filter(c => c.rating > 0);
@@ -131,46 +132,49 @@ const TeacherDashboard: React.FC = () => {
           </Button>
         </div>
         <div className="grid gap-4">
-          {myCourses?.map((course) => (
-            <Card key={course.id} className="card-hover">
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <Image
-                    src={course.thumbnail}
-                    alt={course.title}
-                    width={128}
-                    height={80}
-                    className="rounded-lg object-cover w-full sm:w-32 h-auto sm:h-20"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{course.title}</h3>
-                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {course.students.length.toLocaleString()} students
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                        {course.rating}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4" />
-                        ${(course.students.length * course.price).toLocaleString()} earned
-                      </span>
+          {myCourses?.map((course) => {
+            const studentCount = Array.isArray(course.students) ? course.students.length : 0;
+            return (
+                <Card key={course.id} className="card-hover">
+                <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <Image
+                        src={course.thumbnail}
+                        alt={course.title}
+                        width={128}
+                        height={80}
+                        className="rounded-lg object-cover w-full sm:w-32 h-auto sm:h-20"
+                    />
+                    <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">{course.title}</h3>
+                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            {studentCount.toLocaleString()} students
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                            {course.rating}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <DollarSign className="h-4 w-4" />
+                            ${(studentCount * course.price).toLocaleString()} earned
+                        </span>
+                        </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2 self-start sm:self-center">
-                    <Button variant="outline" size="sm" className="btn-touch-target">
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" className="btn-touch-target">
-                      Analytics
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <div className="flex gap-2 self-start sm:self-center">
+                        <Button variant="outline" size="sm" className="btn-touch-target">
+                        Edit
+                        </Button>
+                        <Button variant="outline" size="sm" className="btn-touch-target">
+                        Analytics
+                        </Button>
+                    </div>
+                    </div>
+                </CardContent>
+                </Card>
+            );
+          })}
           {!coursesLoading && myCourses?.length === 0 && (
             <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <h3 className="text-lg font-medium">You haven't created any courses yet.</h3>
