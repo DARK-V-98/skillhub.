@@ -3,9 +3,20 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import Logo from './Logo';
 import { useState } from 'react';
+import { useUser } from '@/firebase/auth/use-user';
+import Image from 'next/image';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
 
 const navLinks = [
     { href: "/#features", label: "Features" },
@@ -16,6 +27,7 @@ const navLinks = [
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, loading } = useUser();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
@@ -30,14 +42,51 @@ export default function Header() {
                 </Link>
             ))}
           </nav>
-          <div className="hidden items-center gap-2 md:flex">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/login">Sign Up</Link>
-            </Button>
+
+          <div className="hidden items-center gap-4 md:flex">
+            {loading ? (
+                <div className="h-10 w-24 rounded-md bg-muted animate-pulse" />
+            ) : user ? (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="flex items-center gap-2">
+                             {user?.photoURL ? (
+                                <Image
+                                    src={user.photoURL}
+                                    alt={user.displayName || 'User Avatar'}
+                                    width={32}
+                                    height={32}
+                                    className="h-8 w-8 rounded-full object-cover"
+                                />
+                                ) : (
+                                <User className="h-8 w-8 rounded-full object-cover p-1" />
+                            )}
+                            <span>{user.displayName || 'My Account'}</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href="/dashboard">Dashboard</Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem asChild>
+                            <Link href="/dashboard/profile">Profile</Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Sign In</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/login">Sign Up</Link>
+                </Button>
+              </>
+            )}
           </div>
+
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -58,12 +107,20 @@ export default function Header() {
                         </Link>
                     ))}
                     <div className="border-t pt-4 mt-4 space-y-2">
-                        <Button variant="outline" className="w-full" asChild>
-                            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>Sign In</Link>
-                        </Button>
-                        <Button className="w-full" asChild>
-                            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
-                        </Button>
+                        {user ? (
+                             <Button className="w-full" asChild>
+                                <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>Go to Dashboard</Link>
+                            </Button>
+                        ) : (
+                            <>
+                                <Button variant="outline" className="w-full" asChild>
+                                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>Sign In</Link>
+                                </Button>
+                                <Button className="w-full" asChild>
+                                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
+                                </Button>
+                            </>
+                        )}
                     </div>
                   </nav>
                 </div>
